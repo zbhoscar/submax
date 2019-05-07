@@ -2,11 +2,11 @@ import tensorflow as tf
 import os
 
 
-def _int64_feature(value):
+def int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
-def _bytes_feature(value):
+def bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
@@ -187,7 +187,7 @@ def _random_crop(image_list, crop_height, crop_width):
                   crop_height, crop_width) for image in image_list]
 
 
-def _central_crop(image_list, crop_height, crop_width):
+def central_crop(image_list, crop_height, crop_width):
     """Performs central crops of the given image list.
 
     Args:
@@ -275,7 +275,7 @@ def _smallest_size_at_least(height, width, smallest_side):
     return new_height, new_width
 
 
-def _aspect_preserving_resize(image, smallest_side):
+def aspect_preserving_resize(image, smallest_side):
     """Resize images preserving the original aspect ratio.
 
     Args:

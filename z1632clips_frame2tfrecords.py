@@ -48,26 +48,26 @@ def write_tfrecords(sample_path_list, tfrecords_path):
                         image_raw_array.append(image_raw)
 
                     example = tf.train.Example(features=tf.train.Features(
-                        feature={'class_name': basetf._bytes_feature(tf.compat.as_bytes(class_name)),
-                                 'video_name': basetf._bytes_feature(tf.compat.as_bytes(video_name)),
-                                 'clip_index': basetf._int64_feature(j),
-                                 'segment_index': basetf._int64_feature(i),
-                                 'frame0': basetf._bytes_feature(image_raw_array[0]),
-                                 'frame1': basetf._bytes_feature(image_raw_array[1]),
-                                 'frame2': basetf._bytes_feature(image_raw_array[2]),
-                                 'frame3': basetf._bytes_feature(image_raw_array[3]),
-                                 'frame4': basetf._bytes_feature(image_raw_array[4]),
-                                 'frame5': basetf._bytes_feature(image_raw_array[5]),
-                                 'frame6': basetf._bytes_feature(image_raw_array[6]),
-                                 'frame7': basetf._bytes_feature(image_raw_array[7]),
-                                 'frame8': basetf._bytes_feature(image_raw_array[8]),
-                                 'frame9': basetf._bytes_feature(image_raw_array[9]),
-                                 'frame10': basetf._bytes_feature(image_raw_array[10]),
-                                 'frame11': basetf._bytes_feature(image_raw_array[11]),
-                                 'frame12': basetf._bytes_feature(image_raw_array[12]),
-                                 'frame13': basetf._bytes_feature(image_raw_array[13]),
-                                 'frame14': basetf._bytes_feature(image_raw_array[14]),
-                                 'frame15': basetf._bytes_feature(image_raw_array[15]),
+                        feature={'class_name': basetf.bytes_feature(tf.compat.as_bytes(class_name)),
+                                 'video_name': basetf.bytes_feature(tf.compat.as_bytes(video_name)),
+                                 'clip_index': basetf.int64_feature(j),
+                                 'segment_index': basetf.int64_feature(i),
+                                 'frame0': basetf.bytes_feature(image_raw_array[0]),
+                                 'frame1': basetf.bytes_feature(image_raw_array[1]),
+                                 'frame2': basetf.bytes_feature(image_raw_array[2]),
+                                 'frame3': basetf.bytes_feature(image_raw_array[3]),
+                                 'frame4': basetf.bytes_feature(image_raw_array[4]),
+                                 'frame5': basetf.bytes_feature(image_raw_array[5]),
+                                 'frame6': basetf.bytes_feature(image_raw_array[6]),
+                                 'frame7': basetf.bytes_feature(image_raw_array[7]),
+                                 'frame8': basetf.bytes_feature(image_raw_array[8]),
+                                 'frame9': basetf.bytes_feature(image_raw_array[9]),
+                                 'frame10': basetf.bytes_feature(image_raw_array[10]),
+                                 'frame11': basetf.bytes_feature(image_raw_array[11]),
+                                 'frame12': basetf.bytes_feature(image_raw_array[12]),
+                                 'frame13': basetf.bytes_feature(image_raw_array[13]),
+                                 'frame14': basetf.bytes_feature(image_raw_array[14]),
+                                 'frame15': basetf.bytes_feature(image_raw_array[15]),
                                  }))
                     writer.write(example.SerializeToString())
             writer.close()
@@ -109,11 +109,11 @@ def read_tfrecords(tfrecords_path_file_list, num_epochs=1, is_training=False, ba
         for i in range(CLIP_LENGTH):
             index = 'frame%d' % i
             frame = tf.image.decode_jpeg(ft[index])
-            frame = basetf._aspect_preserving_resize(frame, 112)
+            frame = basetf.aspect_preserving_resize(frame, 112)
             # frame = tf.image.convert_image_dtype(frame, dtype=tf.float32)
             frame = tf.to_float(frame)
             clip.append(frame)
-        clip = tf.convert_to_tensor(basetf._central_crop(clip, 112, 112)) - tf.convert_to_tensor(np_mean)
+        clip = tf.convert_to_tensor(basetf.central_crop(clip, 112, 112)) - tf.convert_to_tensor(np_mean)
     elif preprocessing is 'dynamic_image':
         T = CLIP_LENGTH
         xi_shu = [2 * (T - t + 1) - (T + 1) * (basepy.Ht(T) - basepy.Ht(t - 1)) for t in range(1, T + 1)]
