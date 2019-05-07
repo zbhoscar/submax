@@ -6,6 +6,7 @@ import multiprocessing as mp
 import numpy as np
 import cv2
 import data_io.basepy as basepy
+import random
 
 STEP = 8
 CLIP_LENGTH = 16
@@ -204,6 +205,7 @@ def main():
 
     # write tfrecords
     sample_path_list = basepy.get_2tier_folder_path_list(DATASET_PATH)
+    random.shuffle(sample_path_list)
     # single processing
     # write_tfrecords(sample_path_list, CLIPS_TFRECS_PATH)
     basepy.non_output_multiprocessing(write_tfrecords, sample_path_list, CLIPS_TFRECS_PATH,

@@ -69,6 +69,7 @@ for video_name in need_divide:
 # ##################################################################################
 import data_io.basepy as basepy
 import os.path as osp
+import os
 
 video_folder_all = basepy.get_2tier_folder_path_list('/absolute/ext3t')
 folders = [i for i in video_folder_all if osp.isdir(i)]

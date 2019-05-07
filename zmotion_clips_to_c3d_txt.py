@@ -34,8 +34,10 @@ import data_io.basepy as basepy
 # FLAGS = flags.FLAGS
 # gpu_num = 2
 
+# CLIPS_TFRECS_PATH = CLIPS_TFRECS_PATH.replace('datasets', 'ext3t')
 EVAL_RESULT_FOLDER = basepy.check_or_create_path(
-    base_io.CLIPS_TFRECS_PATH.replace('tfrecords', 'c3d_features'), create=True, show=True)
+    base_io.CLIPS_TFRECS_PATH.replace('tfrecords', 'c3d_features').replace('datasets', 'ext3t'),
+    create=True, show=True)
 
 
 def _variable_on_cpu(name, shape, initializer):
@@ -69,9 +71,13 @@ def run_test():
 
     # Get the sets of images and labels for training, validation, and
     # images_placeholder, labels_placeholder = placeholder_inputs(FLAGS.batch_size * gpu_num)
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #                    Need to delete the empty video folder manually
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     classb, videob, indexb, cropb, cb, rb, wb, hb, imageb = get_input(
-        basepy.get_1tier_file_path_list(base_io.CLIPS_TFRECS_PATH), num_epochs=1, is_training=False, batch_size=1)
+        basepy.get_1tier_file_path_list(base_io.CLIPS_TFRECS_PATH, suffix='.tfr'),
+        num_epochs=1, is_training=False, batch_size=1)
 
     with tf.variable_scope('var_name'):  # as var_scope:
         weights = {
