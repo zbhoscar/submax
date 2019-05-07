@@ -28,6 +28,7 @@ AREA_CROPS = [(0, 150, 0, 190),
 def write_tfrecords(sample_path_list, tfrecords_path):
     for sample_path in sample_path_list:
         # eg. sample_path: '/absolute/datasets/anoma/Abuse/Abuse001_x264'
+        # eg. sample_path: '/absolute/datasets/anoma/Normal/Normal_Videos308_3_x264'
         video_name = osp.basename(sample_path)
         class_name = osp.basename(osp.dirname(sample_path))
 
