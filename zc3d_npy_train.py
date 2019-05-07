@@ -19,17 +19,16 @@ tags.DEFINE_integer('epoch_num', 600, 'epoch number.')
 tags.DEFINE_float('learning_rate_base', 0.0003, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
-tags.DEFINE_string('npy_file_path', '/absolute/datasets/anoma_1632_c3d_clips_features', 'npy file path')
+tags.DEFINE_string('npy_file_path', '/absolute/ext3t/anoma_motion16_c3d_features', 'npy file path')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
 # General
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path', osp.join('/absolute/tensorflow_models', timestamp, timestamp + '.ckpt'),
                    'where to store tensorflow models')
-tags.DEFINE_string('embedding', '_max', 'How to embed the clip features in a segment')
 F = tags.FLAGS
 
 SAVE_FILE_PATH = F.save_file_path
-JSON_FILE_PATH = osp.join(basepy.check_or_create_path(osp.dirname(SAVE_FILE_PATH), show=True), 'keys.json')
+JSON_FILE_PATH = osp.join(basepy.check_or_create_path(osp.dirname(SAVE_FILE_PATH), show=True), 'anoma_v08_keys.json')
 D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              batch_size=F.batch_size,
                                                              epoch_num=F.epoch_num,
@@ -41,7 +40,6 @@ D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              lambda1=0.00008,
                                                              lambda2=0.00008,
                                                              fusion=F.fusion,
-                                                             embedding=F.embedding,
                                                              )
 
 print('D values:')
@@ -50,8 +48,7 @@ _ = [print(i, ":", D[i]) for i in D]
 
 def main(_):
     # with tf.device('/cpu:0'):
-    feature_dict = io.read_npy_file_path_list(
-        basepy.get_1tier_file_path_list(D['npy_file_path'], suffix=D['embedding'] + '.npy'))
+    feature_txt_path = basepy.get_1tier_file_path_list(D['npy_file_path'], suffix='.txt')
 
     train_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'
     train_list = basepy.read_txt_lines2list(train_txt, sep=' ')
@@ -59,11 +56,11 @@ def main(_):
     for i in train_list:
         class_name = osp.dirname(i[0])
         if class_name != 'Training_Normal_Videos_Anomaly':
-            video_name = osp.basename(i[0]).split('.')[0] + D['embedding']
+            video_name = osp.basename(i[0]).split('.')[0]
             anomaly_keys.append(class_name + '@' + video_name)
         else:
             class_name = 'normal_train'
-            video_name = osp.basename(i[0]).split('.')[0] + D['embedding']
+            video_name = osp.basename(i[0]).split('.')[0]
             normal_keys.append(class_name + '@' + video_name)
     anomaly_list = basepy.repeat_list_for_epochs(anomaly_keys, epoch_num=D['epoch_num'], shuffle=True)
     normal_list = basepy.repeat_list_for_epochs(normal_keys, epoch_num=D['epoch_num'], shuffle=True)
@@ -76,19 +73,17 @@ def main(_):
         score_anomaly = base.network_fn(input_anom,
                                         fusion=D['fusion'],
                                         feature_len=D['feature_len'],
-                                        segment_num=D['segment_num'],
-                                        attention_l=D['attention_l'])
+                                        segment_num=D['segment_num'])
         score_normal = base.network_fn(input_norm,
                                        fusion=D['fusion'],
                                        feature_len=D['feature_len'],
-                                       segment_num=D['segment_num'],
-                                       attention_l=D['attention_l'])
+                                       segment_num=D['segment_num'])
 
     with tf.name_scope('loss'):
         # batch_score = tf.convert_to_tensor([tf.reduce_max(i) for i in score_anomaly])
-        restrict1 = tf.convert_to_tensor(
-            [tf.reduce_mean((score_anomaly[i][1:] - score_anomaly[i][:-1]) ** 2) for i in range(D['batch_size'])],
-            dtype=tf.float32)
+        # restrict1 = tf.convert_to_tensor(
+        #     [tf.reduce_mean((score_anomaly[i][1:] - score_anomaly[i][:-1]) ** 2) for i in range(D['batch_size'])],
+        #     dtype=tf.float32)
         restrict2 = tf.convert_to_tensor(
             [tf.reduce_mean(score_anomaly[i] ** 2) for i in range(D['batch_size'])],
             dtype=tf.float32)
@@ -96,9 +91,10 @@ def main(_):
         regu = tf.contrib.layers.apply_regularization(
             tf.contrib.layers.l2_regularizer(D['regularization_scale']), tf.trainable_variables())
         mean_mil = tf.reduce_mean(mil_loss)
-        l1, l2 = D['lambda1'] * tf.reduce_mean(restrict1), D['lambda2'] * tf.reduce_mean(restrict2)
+        # l1, l2 = D['lambda1'] * tf.reduce_mean(restrict1), D['lambda2'] * tf.reduce_mean(restrict2)
+        l2 = D['lambda2'] * tf.reduce_mean(restrict2)
         if D['fusion'] == 'standard':
-            loss = mean_mil + l1 + l2 + regu
+            loss = mean_mil + l2 + regu
         elif D['fusion'] == 'segments' or D['fusion'] == 'average' or D['fusion'] == 'attention':
             loss = mean_mil + regu
         else:
@@ -139,12 +135,12 @@ def main(_):
                 for i in normal_list[step * D['batch_size']:step * D['batch_size'] + D['batch_size']]:
                     normal_in.append(feature_dict[i])
 
-                l, _, a, b, c, d = sess.run([loss, train_op, mean_mil, l1, l2, regu],
+                l, _, a, c, d = sess.run([loss, train_op, mean_mil, l2, regu],
                                             feed_dict={input_anom: np.array(anomaly_in, dtype='float32'),
                                                        input_norm: np.array(normal_in, dtype='float32')})
 
                 if step % 100 == 0 or (step % 10 == 0 and step < 100):
-                    print('After %d steps, loss = %g, mil = %g, l1 = %g, l2 = %g, regu = %g.' % (step, l, a, b, c, d))
+                    print('After %d steps, loss = %g, mil = %g, l2 = %g, regu = %g.' % (step, l, a, c, d))
                 if step % 1000 == 0:
                     print('Save tfrecords at step %s' % step)
                     saver.save(sess, SAVE_FILE_PATH, global_step=global_step)

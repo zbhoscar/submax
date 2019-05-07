@@ -1,4 +1,7 @@
 import tensorflow as tf
+import data_io.basepy as basepy
+import random
+import numpy as np
 
 slim = tf.contrib.slim
 
@@ -79,3 +82,14 @@ def network_fn_list(inputs, **kwargs):
             anomaly_score = regression(k, **kwargs)
             outputs.append(anomaly_score)
     return outputs
+
+
+def get_np_from_txt(txt_name, txt_path_list, renum=1001):
+    txt_path = [i for i in txt_path_list if txt_name in i][0]
+    feature = basepy.read_txt_lines2list(txt_path)
+    try:
+        feature = random.sample(feature, renum)
+    except ValueError:
+        quotient, remainder = divmod(renum, len(feature))
+        feature = feature * quotient + random.sample(feature, remainder)
+    return np.array([i[0] for i in feature], dtype='float32')

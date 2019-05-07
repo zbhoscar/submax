@@ -8,7 +8,9 @@ import os
 video_folder_all = basepy.get_2tier_folder_path_list('/absolute/datasets/anoma')
 
 video_folder_path = video_folder_all[np.random.randint(0, len(video_folder_all))]
-# video_folder_path = '/absolute/datasets/anoma/Stealing/Stealing075_x264'
+video_folder_path = '/absolute/datasets/anoma/Stealing/Stealing075_x264'
+video_folder_path = '/absolute/datasets/anoma/Arson/Arson019_x264'
+video_folder_path = '/absolute/datasets/anoma/Explosion/Explosion046_x264'
 
 frames_path = basepy.get_1tier_file_path_list(video_folder_path, suffix='.jpg')
 frame_list = sorted(frames_path, key=lambda x: int(osp.basename(x).split('.')[0]))

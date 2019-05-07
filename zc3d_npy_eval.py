@@ -20,7 +20,7 @@ tags.DEFINE_integer('batch_size', 1, 'batch size.')
 
 RESTORE_FILE_PATH = basetf.get_ckpt_path(F.save_file_path)
 print('Restoring .ckpt from %s' % RESTORE_FILE_PATH)
-JSON_FILE_PATH = osp.join(osp.dirname(RESTORE_FILE_PATH), 'keys.json')
+JSON_FILE_PATH = osp.join(osp.dirname(RESTORE_FILE_PATH), 'anoma_v08_keys.json')
 
 D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).read4path(JSON_FILE_PATH)
 D['batch_size'], D['set_gpu'] = 1, '0'

@@ -145,7 +145,7 @@ def run_test():
                         _ = basepy.write_txt_add_lines(feature_txt_path, str(l2e[i].tolist()),
                                                        str(c[i]), str(d[i]),
                                                        str(ac[i]), str(ar[i]), str(aw[i]), str(ah[i]),
-                                                       str(max(l2e[i]), min(l2e[i])))
+                                                       str(max(l2e[i])), str(min(l2e[i])))
 
                     step += 1
                     if time.time() - timestamp > 1800:
