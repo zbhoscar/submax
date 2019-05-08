@@ -65,16 +65,13 @@ def get_input(file_path_list, num_epochs=None, is_training=True, batch_size=64):
 
 
 def run_test():
-    # test_list_file = 'list/test.list'
-    # num_test_videos = len(list(open(test_list_file,'r')))
-    # print("Number of test videos={}".format(num_test_videos))
-
-    # Get the sets of images and labels for training, validation, and
-    # images_placeholder, labels_placeholder = placeholder_inputs(FLAGS.batch_size * gpu_num)
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #                    Need to delete the empty video folder manually
+    # Remove 2 videos with no motion crop, in normal_train set
+    #   empty folder / empty .tfr / no .txt
+    #   see zvideo_info.py part3 to find out
+    # Split 9 videos in shorter length, in normal_train set
+    # Empty tfrecords make no effects
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     classb, videob, indexb, cropb, cb, rb, wb, hb, imageb = get_input(
         basepy.get_1tier_file_path_list(base_io.CLIPS_TFRECS_PATH, suffix='.tfr'),
         num_epochs=1, is_training=False, batch_size=1)
@@ -142,8 +139,7 @@ def run_test():
                 a, b, c, d, ac, ar, aw, ah, e = sess.run([classb, videob, indexb, cropb, cb, rb, wb, hb, features])
 
                 with tf.device('/cpu:0'):
-                    # l2e = e / np.linalg.norm(e, ord=2, axis=1, keepdims=True)
-                    l2e = e
+                    l2e = e     # e / np.linalg.norm(e, ord=2, axis=1, keepdims=True)
                     for i in range(len(c)):
                         class_video_name = str(a[i], encoding='utf-8') + '@' + str(b[i], encoding='utf-8')
                         feature_txt_path = os.path.join(EVAL_RESULT_FOLDER, class_video_name + '.txt')
