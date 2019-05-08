@@ -2,6 +2,7 @@ import tensorflow as tf
 import data_io.basepy as basepy
 import random
 import numpy as np
+import os.path as osp
 
 slim = tf.contrib.slim
 
@@ -84,12 +85,39 @@ def network_fn_list(inputs, **kwargs):
     return outputs
 
 
-def get_np_from_txt(txt_name, txt_path_list, renum=1001):
-    txt_path = [i for i in txt_path_list if txt_name in i][0]
-    feature = basepy.read_txt_lines2list(txt_path)
+def get_np_from_txt(txt_file_path, renum=1001):
+    feature = basepy.read_txt_lines2list(txt_file_path)
     try:
         feature = random.sample(feature, renum)
     except ValueError:
         quotient, remainder = divmod(renum, len(feature))
         feature = feature * quotient + random.sample(feature, remainder)
     return np.array([i[0] for i in feature], dtype='float32')
+
+
+def reform_train_list(org_txt_list, reform_txt_list):
+    """
+    Reform for some changes in list
+    :param org_txt_list:    [['Abuse/Abuse001_x264.mp4'], ['Abuse/Abuse002_x264.mp4'],...]
+    :param reform_txt_list: ['/absolute/datasets/anoma_motion16_tfrecords/Shoplifting@Shoplifting041_x264.txt',
+                             '/absolute/datasets/anoma_motion16_tfrecords/normal_train@Normal_Videos308_0_x264.txt',]
+    :return:    similar to reform_txt_list
+    """
+    print('List reform:')
+    new_txt_list = []
+    remove = 0
+    replace = 0
+    for trainee in org_txt_list:
+        video_name = osp.basename(trainee[0]).split('_x264')[0]
+        reform_txt = [i for i in reform_txt_list if video_name in i]
+        if not reform_txt:
+            print('Remove  %s from txt_list' % video_name)
+            remove += 1
+        elif len(reform_txt)>1:
+            new_txt_list.extend(reform_txt)
+            print('Replace %s to' % video_name, reform_txt)
+            replace += 1
+        else:
+            new_txt_list.extend(reform_txt)
+    print('List reform DONE, remove %d videos, replace %d videos' % (remove, replace))
+    return new_txt_list

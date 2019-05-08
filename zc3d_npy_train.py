@@ -7,7 +7,6 @@ from pprint import pprint
 
 import data_io.basepy as basepy
 import zc3d_npy_base as base
-import zfeatures_cliptxt2segmentnpy as io
 import zdefault_dict
 
 # Basic model parameters as external flags.
@@ -48,20 +47,14 @@ _ = [print(i, ":", D[i]) for i in D]
 
 def main(_):
     # with tf.device('/cpu:0'):
-    feature_txt_path = basepy.get_1tier_file_path_list(D['npy_file_path'], suffix='.txt')
-
+    feature_path_list = basepy.get_1tier_file_path_list(D['npy_file_path'], suffix='.txt')
     train_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'
     train_list = basepy.read_txt_lines2list(train_txt, sep=' ')
-    anomaly_keys, normal_keys = [], []
-    for i in train_list:
-        class_name = osp.dirname(i[0])
-        if class_name != 'Training_Normal_Videos_Anomaly':
-            video_name = osp.basename(i[0]).split('.')[0]
-            anomaly_keys.append(class_name + '@' + video_name)
-        else:
-            class_name = 'normal_train'
-            video_name = osp.basename(i[0]).split('.')[0]
-            normal_keys.append(class_name + '@' + video_name)
+    train_list = base.reform_train_list(train_list, feature_path_list)
+
+    anomaly_keys = [i for i in train_list if 'normal' not in i.lower()]
+    normal_keys = [i for i in train_list if 'normal' in i.lower()]
+
     anomaly_list = basepy.repeat_list_for_epochs(anomaly_keys, epoch_num=D['epoch_num'], shuffle=True)
     normal_list = basepy.repeat_list_for_epochs(normal_keys, epoch_num=D['epoch_num'], shuffle=True)
 
