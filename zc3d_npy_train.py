@@ -18,7 +18,7 @@ tags.DEFINE_integer('epoch_num', 600, 'epoch number.')
 tags.DEFINE_float('learning_rate_base', 0.0003, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
-tags.DEFINE_string('npy_file_path', '/absolute/ext3t/anoma_motion16_c3d_features', 'npy file path')
+tags.DEFINE_string('npy_file_path', '/absolute/datasets/anoma_motion16_c3d_features', 'npy file path')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
 # General
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
