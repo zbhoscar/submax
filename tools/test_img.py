@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 # image_path = './tools/0.jpg'
-image_path = '/home/zbh/PycharmProjects/anoma_v0.1/guinea/92.jpg'
+image_path = '../guinea/92.jpg'
 
 
 def cv2_imread(image_path, to_float=False):

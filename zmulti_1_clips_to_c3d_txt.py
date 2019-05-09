@@ -32,6 +32,7 @@ import data_io.basepy as basepy
 flags = tf.flags
 flags.DEFINE_string('txt_list_path', './temp/to_c3d_0.txt', 'read .tfr from txt')
 flags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
+flags.DEFINE_integer('batch_size', 1, 'batch size.')
 FLAGS = flags.FLAGS
 
 # CLIPS_TFRECS_PATH = CLIPS_TFRECS_PATH.replace('datasets', 'ext3t')
@@ -76,7 +77,7 @@ def run_test():
     list = [i[0] for i in list]
     classb, videob, indexb, cropb, cb, rb, wb, hb, imageb = get_input(
         list,
-        num_epochs=1, is_training=False, batch_size=1)
+        num_epochs=1, is_training=False, batch_size=FLAGS.batch_size)
 
     with tf.variable_scope('var_name'):  # as var_scope:
         weights = {
