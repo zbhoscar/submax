@@ -4,7 +4,7 @@ import random
 
 tfrecord_path = '/absolute/datasets/anoma_motion16_tfrecords'
 dst_txt_path = '/absolute/ext3t/anoma_motion16_c3d_features'
-divide_num = 3
+divide_num = 7
 
 tfrecord_path = basepy.get_1tier_file_path_list(tfrecord_path, suffix='.tfr')
 already_path = basepy.get_1tier_file_path_list(dst_txt_path, suffix='.txt')
