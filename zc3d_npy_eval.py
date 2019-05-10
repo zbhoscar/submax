@@ -13,7 +13,7 @@ import zdefault_dict
 # Basic model parameters as external flags.
 tags = tf.flags
 F = tags.FLAGS
-tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190425190541/190425190541.ckpt-1001',
+tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190510120809/190510120809.ckpt-3001',
                    'where to restore.')
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_integer('batch_size', 1, 'batch size.')
@@ -23,22 +23,24 @@ print('Restoring .ckpt from %s' % RESTORE_FILE_PATH)
 JSON_FILE_PATH = osp.join(osp.dirname(RESTORE_FILE_PATH), 'anoma_v08_keys.json')
 
 D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).read4path(JSON_FILE_PATH)
-D['batch_size'], D['set_gpu'] = 1, '0'
+D['batch_size'], D['set_gpu'] = 1, F.set_gpu
 
 print('D values:')
 _ = [print(i, ":", D[i]) for i in D]
 
 
 def main(_):
-    with tf.device('/cpu:0'):
-        feature_dict = io.read_npy_file_path_list(
-            basepy.get_1tier_file_path_list(D['npy_file_path'],
-                                            suffix=D['embedding'] + '.npy'), class_name_in_keys=False)
+    # with tf.device('/cpu:0'):
+    # feature_dict = io.read_npy_file_path_list(a_list, class_name_in_keys=False)
+    feature_path_list = basepy.get_1tier_file_path_list(D['npy_file_path'], suffix='.npy')
 
-        test_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'
-        test_list = basepy.read_txt_lines2list(test_txt, sep='  ')
-        test_keys = [j[0].split('.')[0] + D['embedding'] for j in test_list]
-        label_keys = [0 if 'Normal' in j[0] else 1 for j in test_list]
+    test_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'
+    test_list = basepy.read_txt_lines2list(test_txt, sep='  ')
+    test_list = base.reform_train_list(test_list, feature_path_list)
+    feature_dict = io.read_npy_file_path_list(test_list)
+
+    test_keys = list(feature_dict.keys())
+    label_keys = [0 if 'normal' in j.lower() else 1 for j in test_list]
 
     with tf.name_scope('input'):
         input_test = tf.placeholder(tf.float32, [D['batch_size'], D['segment_num'], D['feature_len']], name='anom')
@@ -48,7 +50,6 @@ def main(_):
                                         fusion=D['fusion'],
                                         feature_len=D['feature_len'],
                                         segment_num=D['segment_num'],
-                                        attention_l=D['attention_l'],
                                         is_training=False)
 
     saver = tf.train.Saver()
@@ -68,7 +69,7 @@ def main(_):
             while True:
                 test_in = []
                 for i in test_keys[step * D['batch_size']:step * D['batch_size'] + D['batch_size']]:
-                    test_in.append(feature_dict[i])
+                    test_in.append(base.reform_np_array(feature_dict[i], reduce=D['segment_num']))
 
                 np_test_in = np.array(test_in, dtype='float32')
 

@@ -14,9 +14,9 @@ import zreduce_txt_to_npy as io
 timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
 tags = tf.flags
 # Net config
-tags.DEFINE_integer('batch_size', 30, 'batch size.')
+tags.DEFINE_integer('batch_size', 64, 'batch size.')
 tags.DEFINE_integer('epoch_num', 600, 'epoch number.')
-tags.DEFINE_float('learning_rate_base', 0.0003, 'learning rate base')
+tags.DEFINE_float('learning_rate_base', 0.0005, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
@@ -88,12 +88,13 @@ def main(_):
         mean_mil = tf.reduce_mean(mil_loss)
         # l1, l2 = D['lambda1'] * tf.reduce_mean(restrict1), D['lambda2'] * tf.reduce_mean(restrict2)
         l2 = D['lambda2'] * tf.reduce_mean(restrict2)
-        if D['fusion'] == 'standard':
-            loss = mean_mil + l2 + regu
-        elif D['fusion'] == 'segments' or D['fusion'] == 'average' or D['fusion'] == 'attention':
-            loss = mean_mil + regu
-        else:
-            raise ValueError('Wrong fusion type: %s' % D['fusion'])
+        # if D['fusion'] == 'standard':
+        #     loss = mean_mil + l2 + regu
+        # elif D['fusion'] == 'segments' or D['fusion'] == 'average' or D['fusion'] == 'attention':
+        #     loss = mean_mil + regu
+        # else:
+        #     raise ValueError('Wrong fusion type: %s' % D['fusion'])
+        loss = mean_mil + regu
 
     global_step = tf.Variable(0, trainable=False)
     with tf.name_scope('moving_average'):
@@ -110,7 +111,7 @@ def main(_):
     pprint(tf.trainable_variables())
     print('Model .ckpt save path: %s' % SAVE_FILE_PATH)
 
-    saver = tf.train.Saver(max_to_keep=15)
+    saver = tf.train.Saver(max_to_keep=20)
 
     init_op = tf.global_variables_initializer()
     os.environ["CUDA_VISIBLE_DEVICES"] = D['set_gpu']
@@ -125,18 +126,20 @@ def main(_):
             while True:
                 step = sess.run(global_step)
                 anomaly_in, normal_in = [], []
+                time1 = time.time()
                 for i in anomaly_list[step * D['batch_size']:step * D['batch_size'] + D['batch_size']]:
                     anomaly_in.append(base.reform_np_array(feature_dict[i], reduce=D['segment_num']))
                 for i in normal_list[step * D['batch_size']:step * D['batch_size'] + D['batch_size']]:
                     normal_in.append(base.reform_np_array(feature_dict[i], reduce=D['segment_num']))
 
+                time2 = time.time()
                 l, _, a, c, d = sess.run([loss, train_op, mean_mil, l2, regu],
-                                            feed_dict={input_anom: np.array(anomaly_in, dtype='float32'),
-                                                       input_norm: np.array(normal_in, dtype='float32')})
-
+                                         feed_dict={input_anom: np.array(anomaly_in, dtype='float32'),
+                                                    input_norm: np.array(normal_in, dtype='float32')})
                 if step % 100 == 0 or (step % 10 == 0 and step < 100):
-                    print('After %d steps, loss = %g, mil = %g, l2 = %g, regu = %g.' % (step, l, a, c, d))
-                if step % 1000 == 0:
+                    print('After %d steps, loss = %g, mil = %g, l2 = %g, regu = %g.     feed: %s, train: %s' %
+                          (step, l, a, c, d, time2 - time1, time.time() - time2))
+                if step % 500 == 0:
                     print('Save tfrecords at step %s' % step)
                     saver.save(sess, SAVE_FILE_PATH, global_step=global_step)
         except ValueError:

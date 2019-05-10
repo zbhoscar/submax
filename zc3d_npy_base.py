@@ -3,6 +3,7 @@ import data_io.basepy as basepy
 import random
 import numpy as np
 import os.path as osp
+import copy
 
 slim = tf.contrib.slim
 
@@ -113,7 +114,7 @@ def reform_train_list(org_txt_list, reform_txt_list):
         if not reform_txt:
             print('Remove  %s from txt_list' % video_name)
             remove += 1
-        elif len(reform_txt)>1:
+        elif len(reform_txt) > 1:
             new_txt_list.extend(reform_txt)
             print('Replace %s to' % video_name, reform_txt)
             replace += 1
@@ -125,8 +126,14 @@ def reform_train_list(org_txt_list, reform_txt_list):
 
 def reform_np_array(np_array, reduce=1001, model='standard'):
     if np_array.shape[0] > reduce:
-        np.random.shuffle(np_array)
-        return np_array[:reduce,:4096]
+        np_copy = copy.deepcopy(np_array)
+        np.random.shuffle(np_copy)
+        np_output = np_copy[:reduce, :4096]
     else:
-        quotient = reduce // np_array.shape[0] + 1
-        return np_array.repeat(quotient, axis=0)[:reduce,:4096]
+        quotient = reduce // np_array.shape[0]
+        np_temp = np_array.repeat(quotient, axis=0)
+        np_output = np.concatenate((np_temp, np_array[:reduce - len(np_temp)]), axis=0)[:, :4096]
+    return np_output / np.linalg.norm(np_output, ord=2, axis=1, keepdims=True)
+
+# 'normal_test@Normal_Videos_781_x264'
+# 'Robbery@Robbery106_x264'
