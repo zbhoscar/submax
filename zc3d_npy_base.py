@@ -121,3 +121,12 @@ def reform_train_list(org_txt_list, reform_txt_list):
             new_txt_list.extend(reform_txt)
     print('List reform DONE, remove %d videos, replace %d videos' % (remove, replace))
     return new_txt_list
+
+
+def reform_np_array(np_array, reduce=1001, model='standard'):
+    if np_array.shape[0] > reduce:
+        np.random.shuffle(np_array)
+        return np_array[:reduce,:4096]
+    else:
+        quotient = reduce // np_array.shape[0] + 1
+        return np_array.repeat(quotient, axis=0)[:reduce,:4096]

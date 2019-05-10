@@ -8,6 +8,7 @@ from pprint import pprint
 import data_io.basepy as basepy
 import zc3d_npy_base as base
 import zdefault_dict
+import zreduce_txt_to_npy as io
 
 # Basic model parameters as external flags.
 timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
@@ -18,8 +19,8 @@ tags.DEFINE_integer('epoch_num', 600, 'epoch number.')
 tags.DEFINE_float('learning_rate_base', 0.0003, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
-tags.DEFINE_string('npy_file_path', '/absolute/datasets/anoma_motion16_c3d_features', 'npy file path')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
+tags.DEFINE_string('npy_file_path', '/absolute/ext3t/anoma_motion16_reduced_npy', 'npy file path')
 # General
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path', osp.join('/absolute/tensorflow_models', timestamp, timestamp + '.ckpt'),
@@ -47,13 +48,14 @@ _ = [print(i, ":", D[i]) for i in D]
 
 def main(_):
     # with tf.device('/cpu:0'):
-    feature_path_list = basepy.get_1tier_file_path_list(D['npy_file_path'], suffix='.txt')
+    feature_path_list = basepy.get_1tier_file_path_list(D['npy_file_path'], suffix='.npy')
     train_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'
     train_list = basepy.read_txt_lines2list(train_txt, sep=' ')
     train_list = base.reform_train_list(train_list, feature_path_list)
+    feature_dict = io.read_npy_file_path_list(train_list)
 
-    anomaly_keys = [i for i in train_list if 'normal' not in i.lower()]
-    normal_keys = [i for i in train_list if 'normal' in i.lower()]
+    anomaly_keys = [i for i in feature_dict.keys() if 'normal' not in i.lower()]
+    normal_keys = [i for i in feature_dict.keys() if 'normal' in i.lower()]
 
     anomaly_list = basepy.repeat_list_for_epochs(anomaly_keys, epoch_num=D['epoch_num'], shuffle=True)
     normal_list = basepy.repeat_list_for_epochs(normal_keys, epoch_num=D['epoch_num'], shuffle=True)
@@ -124,9 +126,9 @@ def main(_):
                 step = sess.run(global_step)
                 anomaly_in, normal_in = [], []
                 for i in anomaly_list[step * D['batch_size']:step * D['batch_size'] + D['batch_size']]:
-                    anomaly_in.append(feature_dict[i])
+                    anomaly_in.append(base.reform_np_array(feature_dict[i], reduce=D['segment_num']))
                 for i in normal_list[step * D['batch_size']:step * D['batch_size'] + D['batch_size']]:
-                    normal_in.append(feature_dict[i])
+                    normal_in.append(base.reform_np_array(feature_dict[i], reduce=D['segment_num']))
 
                 l, _, a, c, d = sess.run([loss, train_op, mean_mil, l2, regu],
                                             feed_dict={input_anom: np.array(anomaly_in, dtype='float32'),
