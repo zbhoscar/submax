@@ -14,16 +14,15 @@ CRITERIA = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1)
 _OPTICAL = 2
 
 DATASET_PATH = '/absolute/datasets/anoma'
-CLIPS_TFRECS_PATH = DATASET_PATH + '_motion%d_tfrecords' % CLIP_LENGTH
+CLIPS_TFRECS_PATH = DATASET_PATH + '_motion%d_tfrecords_c120' % CLIP_LENGTH
 # CLIPS_TFRECS_PATH = CLIPS_TFRECS_PATH.replace('datasets', 'ext3t')
 
 # cv2 format: c, r, w, h                    # -> start, -v start, -> length, -v length
-TRACK_WINDOW = (70, 50, 50, 50)
+TRACK_WINDOW = [(70, 50, 50, 50),
+                (50, 30, 120, 120)][1]
 # np  format: shape = (240, 320, 3)         # (h, w, channel)
-AREA_CROPS = [(0, 150, 0, 190),
-              (0, 150, 130, 320),
-              (90, 240, 0, 190),
-              (90, 240, 130, 320)]
+AREA_CROPS = [[(0, 150, 0, 190),(0, 150, 130, 320),(90, 240, 0, 190),(90, 240, 130, 320)],
+              [(0, 180, 0, 220),(0, 180, 100, 320),(60, 240, 0, 220),(60, 240, 100, 320)]][1]
 
 
 def write_tfrecords(sample_path_list, tfrecords_path):
