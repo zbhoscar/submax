@@ -15,7 +15,7 @@ timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
 tags = tf.flags
 # Net config
 tags.DEFINE_integer('batch_size', 64, 'batch size.')
-tags.DEFINE_integer('epoch_num', 600, 'epoch number.')
+tags.DEFINE_integer('epoch_num', 1200, 'epoch number.')
 tags.DEFINE_float('learning_rate_base', 0.0005, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
@@ -25,6 +25,8 @@ tags.DEFINE_string('npy_file_path', '/absolute/ext3t/anoma_motion16_reduced_npy'
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path', osp.join('/absolute/tensorflow_models', timestamp, timestamp + '.ckpt'),
                    'where to store tensorflow models')
+# lasting
+tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')
 F = tags.FLAGS
 
 SAVE_FILE_PATH = F.save_file_path
@@ -40,6 +42,7 @@ D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              lambda1=0.00008,
                                                              lambda2=0.00008,
                                                              fusion=F.fusion,
+                                                             lasting=F.lasing,
                                                              )
 
 print('D values:')

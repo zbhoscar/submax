@@ -21,12 +21,11 @@ _OPTICAL = 2
 STEP = 8
 
 # cv2 format: c, r, w, h                    # -> start, -v start, -> length, -v length
-TRACK_WINDOW = (70, 50, 50, 50)
+TRACK_WINDOW = [(70, 50, 50, 50),
+                (50, 30, 120, 120)][1]
 # np  format: shape = (240, 320, 3)         # (h, w, channel)
-AREA_CROPS = [(0, 150, 0, 190),
-              (0, 150, 130, 320),
-              (90, 240, 0, 190),
-              (90, 240, 130, 320)]
+AREA_CROPS = [[(0, 150, 0, 190),(0, 150, 130, 320),(90, 240, 0, 190),(90, 240, 130, 320)],
+              [(0, 180, 0, 220),(0, 180, 100, 320),(60, 240, 0, 220),(60, 240, 100, 320)]][1]
 
 P_folder_path = '/absolute/ext3t/anoma_motion16_tfrecords/test'
 class_name = 'class'
