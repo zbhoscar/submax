@@ -1,14 +1,13 @@
+sports1m_finetuning_ucf101.model
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.pyc
 
-sports1m_finetuning_ucf101.model
-
 #Pycharm
-.idea
-.idea/
 *._.DS_Store
 *.DS_Store
 

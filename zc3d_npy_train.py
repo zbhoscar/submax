@@ -6,6 +6,7 @@ import time
 from pprint import pprint
 
 import data_io.basepy as basepy
+import data_io.basetf as basetf
 import zc3d_npy_base as base
 import zdefault_dict
 import zreduce_txt_to_npy as io
@@ -26,7 +27,7 @@ tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path', osp.join('/absolute/tensorflow_models', timestamp, timestamp + '.ckpt'),
                    'where to store tensorflow models')
 # lasting
-tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')
+tags.DEFINE_string('lasting', '/absolute/tensorflow_models/190510185136', 'a TensorFlow model path for lasting')
 F = tags.FLAGS
 
 SAVE_FILE_PATH = F.save_file_path
@@ -42,7 +43,7 @@ D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              lambda1=0.00008,
                                                              lambda2=0.00008,
                                                              fusion=F.fusion,
-                                                             lasting=F.lasing,
+                                                             lasting=F.lasting,
                                                              )
 
 print('D values:')
@@ -125,29 +126,39 @@ def main(_):
 
         print('program begins, timestamp %s' % time.asctime(time.localtime(time.time())))
 
+        if D['lasting']:
+            restore_ckpt = basetf.get_ckpt_path(D['lasting'])
+            saver_goon = tf.train.Saver()
+            saver_goon.restore(sess, restore_ckpt)
+
         try:
             while True:
                 step = sess.run(global_step)
-                anomaly_in, normal_in = [], []
                 time1 = time.time()
-                for i in anomaly_list[step * D['batch_size']:step * D['batch_size'] + D['batch_size']]:
-                    anomaly_in.append(base.reform_np_array(feature_dict[i], reduce=D['segment_num']))
-                for i in normal_list[step * D['batch_size']:step * D['batch_size'] + D['batch_size']]:
-                    normal_in.append(base.reform_np_array(feature_dict[i], reduce=D['segment_num']))
+
+                anomaly_in = np.empty((D['batch_size'], D['segment_num'], D['feature_len']), dtype='float32')
+                normal_in = np.empty((D['batch_size'], D['segment_num'], D['feature_len']), dtype='float32')
+
+                batch_start, batch_end = step * D['batch_size'], step * D['batch_size'] + D['batch_size']
+                for j, i in enumerate(anomaly_list[batch_start:batch_end]):
+                    anomaly_in[j] = base.reform_np_array(feature_dict[i], reduce=D['segment_num'])
+                for j, i in enumerate(normal_list[batch_start:batch_end]):
+                    normal_in[j] = base.reform_np_array(feature_dict[i], reduce=D['segment_num'])
 
                 time2 = time.time()
                 l, _, a, c, d = sess.run([loss, train_op, mean_mil, l2, regu],
-                                         feed_dict={input_anom: np.array(anomaly_in, dtype='float32'),
-                                                    input_norm: np.array(normal_in, dtype='float32')})
+                                         feed_dict={input_anom: anomaly_in, input_norm: normal_in})
                 if step % 100 == 0 or (step % 10 == 0 and step < 100):
-                    print('After %d steps, loss = %g, mil = %g, l2 = %g, regu = %g.     feed: %s, train: %s' %
+                    print('After %5d steps, loss = %.5e, mil = %.5e, l2 = %.5e, regu = %.5e, '
+                          'feed: %.3fsec, train: %.3fsec' %
                           (step, l, a, c, d, time2 - time1, time.time() - time2))
                 if step % 500 == 0:
                     print('Save tfrecords at step %s' % step)
                     saver.save(sess, SAVE_FILE_PATH, global_step=global_step)
         except ValueError:
             print("Training done, at %s" % time.asctime(time.localtime(time.time())))
-    print('debug symbol')
+    print('Model .ckpt save path: %s' % SAVE_FILE_PATH)
+    print('----------Finish----------DebugSymbol----------')
 
 
 if __name__ == '__main__':
