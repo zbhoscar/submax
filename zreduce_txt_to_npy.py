@@ -5,10 +5,11 @@ import multiprocessing as mp
 import numpy as np
 import time
 
-SRC_TXT_PATH = '/absolute/ext3t/anoma_motion16_c3d_features'
-RED_NPY_PATH = basepy.check_or_create_path(SRC_TXT_PATH.replace('c3d_features', 'reduced_npy'))
+SRC_TXT_PATH = '/absolute/ext3t/anoma_motion16_c3d_features_c50'
 
-REDUCE_MODEL, REDUCE_NUM = (('standard', 2019), ('max', 1001))[1]
+REDUCE_MODEL, REDUCE_NUM = (('rand', 2019), ('max', 1001))[1]
+RED_NPY_PATH = basepy.check_or_create_path(
+    SRC_TXT_PATH.replace('c3d_features', 'npy_' + REDUCE_MODEL + '_' + str(REDUCE_NUM)))
 
 
 def get_reduced_npy(sample_txt, data_type='float32', is_writing=True):

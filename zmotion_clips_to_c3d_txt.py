@@ -148,17 +148,14 @@ def run_test():
                                                        str(c[i]), str(d[i]),
                                                        str(ac[i]), str(ar[i]), str(aw[i]), str(ah[i]),
                                                        str(max(l2e[i])), str(min(l2e[i])))
-
                     step += 1
                     if time.time() - timestamp > 1800:
                         localtime = time.asctime(time.localtime(time.time()))
                         average_time_per_step = (time.time() - timestamp) / step
                         print('program ongoing, timestamp %s, per step %s sec' % (localtime, average_time_per_step))
                         step, timestamp = 0, time.time()
-
         except Exception as error:
             coord.request_stop(error)
-
         coord.request_stop()
         coord.join(threads)
 

@@ -5,6 +5,7 @@ import os
 import cv2
 import shutil
 import numpy as np
+import json
 
 VIDEO_FOLDER_SET = basepy.get_2tier_folder_path_list('/absolute/datasets/anoma')
 
@@ -22,7 +23,7 @@ def high_motion_visualization(sample_path_list=VIDEO_FOLDER_PATH, tfrecords_path
     _ = base.write_tfrecords(sample_path_list, tfrecords_path, visualization=True)
 
 
-def divide_long_video_folder(video_folder_all=VIDEO_FOLDER_SET):
+def get_video_info_json(video_folder_all=VIDEO_FOLDER_SET):
     info = []
     for video_folder_path in video_folder_all:
         frames_path = basepy.get_1tier_file_path_list(video_folder_path, suffix='.jpg')
@@ -35,6 +36,19 @@ def divide_long_video_folder(video_folder_all=VIDEO_FOLDER_SET):
         frame_shp = frame_sta.shape
         info.append([osp.basename(video_folder_path), (frame_num, frame_end), frame_shp])
 
+    json_file = './temp/video_info.json'
+    with open(json_file, 'w') as f:
+        json.dump(info, f)
+    return info
+
+
+def devide_long_video_folder(json_file='./temp/video_info.json'):
+    try:
+        with open(json_file, 'r') as f:
+            info = json.load(f)
+    except FileNotFoundError:
+        info = get_video_info_json()
+
     norm = [(i[0], i[1]) for i in info if 'normal' in i[0].lower()]
     anom = [(i[0], i[1]) for i in info if 'normal' not in i[0].lower()]
 
@@ -45,7 +59,7 @@ def divide_long_video_folder(video_folder_all=VIDEO_FOLDER_SET):
     need_divide = [i for i in norm if i[1][0] > max_anom]
     for video_name in need_divide:
         # ('Normal_Videos308_x264', [976504, 976504])
-        video_folder = [i for i in video_folder_all if video_name[0] in i][0]
+        video_folder = [i for i in VIDEO_FOLDER_SET if video_name[0] in i][0]
         sep = int(video_name[1][0] / 100000 + 1)
         frame_list = basepy.get_1tier_file_path_list(video_folder)
         frame_list = sorted(frame_list, key=lambda x: int(osp.basename(x).split('.')[0]))
@@ -59,8 +73,8 @@ def divide_long_video_folder(video_folder_all=VIDEO_FOLDER_SET):
 def find_empty_motion_video(tfrecs_path=CLIPS_TFRECS_PATH):
     tfr_path_list = basepy.get_1tier_file_path_list(tfrecs_path)
     folders = [i for i in tfr_path_list if osp.isdir(i)]
-    tfrecos = [i[:-9].split('@')[1] for i in tfr_path_list if '.tfr' in i]
-    txtfile = [i[:-9].split('@')[1] for i in tfr_path_list if '.txt' in i]
+    tfrecos = [osp.basename(i.split('.')[0]) for i in tfr_path_list if '.tfr' in i]
+    txtfile = [osp.basename(i.split('.')[0]) for i in tfr_path_list if '.txt' in i]
 
     tfr_not_txt = [i for i in tfrecos if i not in txtfile]
 

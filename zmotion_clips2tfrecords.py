@@ -26,7 +26,7 @@ AREA_CROPS = [[(0, 150, 0, 190), (0, 150, 130, 320), (90, 240, 0, 190), (90, 240
               [(0, 180, 0, 220), (0, 180, 100, 320), (60, 240, 0, 220), (60, 240, 100, 320)]][1]
 
 
-def write_tfrecords(sample_path_list, tfrecords_path, visualization=False):
+def write_tfrecords(sample_path_list, tfrecords_path, visualization=False, txt_only=False):
     for sample_path in sample_path_list:
         # eg. sample_path: '/absolute/datasets/anoma/Abuse/Abuse001_x264'
         # eg. sample_path: '/absolute/datasets/anoma/Normal/Normal_Videos308_3_x264'
