@@ -1,6 +1,6 @@
 sports1m_finetuning_ucf101.model
 .idea/
-./temp
+/temp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
