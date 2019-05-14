@@ -160,6 +160,5 @@ def main(_):
     print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
-
 if __name__ == '__main__':
     tf.app.run()

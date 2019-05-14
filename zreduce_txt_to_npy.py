@@ -19,7 +19,6 @@ def get_reduced_npy(sample_txt, data_type='float32', is_writing=True):
         # clip_features = sorted()
         clip_features = clip_features
 
-
     feature_list = [[] for _ in range(len(clip_features))]
     for j, i in enumerate(clip_features):
         # i:
@@ -27,8 +26,8 @@ def get_reduced_npy(sample_txt, data_type='float32', is_writing=True):
         feature = eval(i[0])
         frame_index, nj = eval(i[1]), eval(i[2])
         c, r, w, h = eval(i[3]), eval(i[4]), eval(i[5]), eval(i[6])
-        max, min = eval(i[7]), eval(i[8])
-        feature_list[j] = feature + [frame_index, nj, c, r, w, h, max, min]
+        max_value, min_value = eval(i[7]), eval(i[8])
+        feature_list[j] = feature + [frame_index, nj, c, r, w, h, max_value, min_value]
 
     output = np.array(feature_list, dtype=data_type)
 
