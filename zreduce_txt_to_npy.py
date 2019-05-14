@@ -8,12 +8,17 @@ import time
 SRC_TXT_PATH = '/absolute/ext3t/anoma_motion16_c3d_features'
 RED_NPY_PATH = basepy.check_or_create_path(SRC_TXT_PATH.replace('c3d_features', 'reduced_npy'))
 
-REDUCE_NUM = 2019
+REDUCE_MODEL, REDUCE_NUM = (('standard', 2019), ('max', 1001))[1]
 
 
 def get_reduced_npy(sample_txt, data_type='float32', is_writing=True):
     clip_features = basepy.read_txt_lines2list(sample_txt)
-    clip_features = random.sample(clip_features, REDUCE_NUM) if len(clip_features) > REDUCE_NUM else clip_features
+    if REDUCE_MODEL == 'standard':
+        clip_features = random.sample(clip_features, REDUCE_NUM) if len(clip_features) > REDUCE_NUM else clip_features
+    elif REDUCE_MODEL == 'max':
+        # clip_features = sorted()
+        clip_features = clip_features
+
 
     feature_list = [[] for _ in range(len(clip_features))]
     for j, i in enumerate(clip_features):
@@ -50,11 +55,24 @@ def main():
     remaining_txt_list = [i for i in txt_path_list if osp.basename(i).split('.')[0] not in npy_done_str]
     print('%d in all, %d .npy exist, %d .txt remaining' %
           (len(txt_path_list), len(npy_done_list), len(remaining_txt_list)), '...')
+
     random.shuffle(remaining_txt_list)
 
     basepy.non_output_multiprocessing(multi_get_reduced_npy, remaining_txt_list, 'float32', True,
                                       num=int(mp.cpu_count()))
     print('writing done')
+
+
+def get_remaining_list(path1=SRC_TXT_PATH, suffix1='.txt', path2=RED_NPY_PATH, suffix2='.npy'):
+    # write tfrecords
+    txt_path_list = basepy.get_1tier_file_path_list(path1, suffix=suffix1)
+    npy_done_list = basepy.get_1tier_file_path_list(path2, suffix=suffix2)
+    npy_done_str = str(npy_done_list)
+
+    remaining_txt_list = [i for i in txt_path_list if osp.basename(i).split('.')[0] not in npy_done_str]
+    print('%d in all, %d .npy exist, %d .txt remaining' %
+          (len(txt_path_list), len(npy_done_list), len(remaining_txt_list)), '...')
+    return txt_path_list, npy_done_list, remaining_txt_list
 
 
 def read_npy_file_path_list(npy_file_path_list, class_name_in_keys=True, sep='@'):

@@ -25,7 +25,7 @@ import time
 # import numpy as np
 
 import c3d_model
-import zmotion_clip2tfrecords as base_io
+import zmotion_clips2tfrecords as base_io
 import data_io.basepy as basepy
 
 # # Basic model parameters as external flags.
@@ -162,8 +162,7 @@ def run_test():
         coord.request_stop()
         coord.join(threads)
 
-    print("done, at %s" % time.asctime(time.localtime(time.time())))
-    print('debug symbol')
+    print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
 def main(_):

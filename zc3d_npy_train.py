@@ -156,9 +156,9 @@ def main(_):
                     print('Save tfrecords at step %s' % step)
                     saver.save(sess, SAVE_FILE_PATH, global_step=global_step)
         except ValueError:
-            print("Training done, at %s" % time.asctime(time.localtime(time.time())))
-    print('Model .ckpt save path: %s' % SAVE_FILE_PATH)
-    print('----------Finish----------DebugSymbol----------')
+            print('Model .ckpt save path: %s' % SAVE_FILE_PATH)
+    print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
+
 
 
 if __name__ == '__main__':

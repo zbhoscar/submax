@@ -1,4 +1,4 @@
-import zmotion_clip2tfrecords as base_io
+import zmotion_clips2tfrecords as base_io
 import tensorflow as tf
 import time
 import data_io.basepy as basepy

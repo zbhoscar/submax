@@ -67,16 +67,3 @@ for video_name in need_divide:
 
 
 # ##################################################################################
-import data_io.basepy as basepy
-import os.path as osp
-import os
-
-video_folder_all = basepy.get_1tier_file_path_list('/absolute/datasets/anoma_motion16_tfrecords')
-folders = [i for i in video_folder_all if osp.isdir(i)]
-tfrecos = [i[:-9].split('@')[1] for i in video_folder_all if '.tfr' in i]
-txtfile = [i[:-9].split('@')[1] for i in video_folder_all if '.txt' in i]
-
-
-tfr_not_txt = [i for i in tfrecos if i not in txtfile]
-
-ept = [i for i in folders if not os.listdir(i)]

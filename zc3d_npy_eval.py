@@ -13,7 +13,7 @@ import zdefault_dict
 # Basic model parameters as external flags.
 tags = tf.flags
 F = tags.FLAGS
-tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190510191850/190510191850.ckpt-1501',
+tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190512114811',
                    'where to restore.')
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_integer('batch_size', 1, 'batch size.')
@@ -88,7 +88,7 @@ def main(_):
     print(precision_list)
     print(max(precision_list))
 
-    print('debug symbol')
+    print('----------Finish----------DebugSymbol----------')
 
 
 if __name__ == '__main__':

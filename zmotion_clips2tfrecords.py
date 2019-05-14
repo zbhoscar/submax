@@ -7,6 +7,7 @@ import numpy as np
 import cv2
 import data_io.basepy as basepy
 import random
+import copy
 
 STEP = 8
 CLIP_LENGTH = 16
@@ -21,11 +22,11 @@ CLIPS_TFRECS_PATH = CLIPS_TFRECS_PATH.replace('datasets', 'ext3t')
 TRACK_WINDOW = [(70, 50, 50, 50),
                 (50, 30, 120, 120)][1]
 # np  format: shape = (240, 320, 3)         # (h, w, channel)
-AREA_CROPS = [[(0, 150, 0, 190),(0, 150, 130, 320),(90, 240, 0, 190),(90, 240, 130, 320)],
-              [(0, 180, 0, 220),(0, 180, 100, 320),(60, 240, 0, 220),(60, 240, 100, 320)]][1]
+AREA_CROPS = [[(0, 150, 0, 190), (0, 150, 130, 320), (90, 240, 0, 190), (90, 240, 130, 320)],
+              [(0, 180, 0, 220), (0, 180, 100, 320), (60, 240, 0, 220), (60, 240, 100, 320)]][1]
 
 
-def write_tfrecords(sample_path_list, tfrecords_path):
+def write_tfrecords(sample_path_list, tfrecords_path, visualization=False):
     for sample_path in sample_path_list:
         # eg. sample_path: '/absolute/datasets/anoma/Abuse/Abuse001_x264'
         # eg. sample_path: '/absolute/datasets/anoma/Normal/Normal_Videos308_3_x264'
@@ -56,6 +57,7 @@ def write_tfrecords(sample_path_list, tfrecords_path):
                              for i in range(int(CLIP_LENGTH / _OPTICAL))]
                     motion = np.sum([np.linalg.norm(flow, ord=None, axis=2) for flow in flows], axis=0)
 
+                    frame = copy.deepcopy(frames[0]) if visualization else False
                     for nj, area in enumerate(AREA_CROPS):
                         motion_crop = motion[area[0]:area[1], area[2]:area[3]]
                         _, window_temp = cv2.meanShift(motion_crop, TRACK_WINDOW, CRITERIA)
@@ -76,9 +78,6 @@ def write_tfrecords(sample_path_list, tfrecords_path):
                             _ = [cv2.imwrite(frame_crops_path[i],
                                              frames[i][r + area[0]:r + h + area[0], c + area[2]:c + w + area[2]])
                                  for i in range(CLIP_LENGTH)]
-                            #  frame = cv2.rectangle(frame,
-                            #                       (c + area[2], r + area[0]),
-                            #                       (c + area[2] + w, r + area[0] + h), 255, 2)
 
                             image_raw_array = [tf.gfile.FastGFile(i, 'rb').read() for i in frame_crops_path]
 
@@ -109,12 +108,20 @@ def write_tfrecords(sample_path_list, tfrecords_path):
                                          'frame15': basetf.bytes_feature(image_raw_array[15]),
                                          }))
                             writer.write(example.SerializeToString())
-                            del frame_crops_path, image_raw_array
-                        del motion_crop, window_temp, c, r, w, h, mobject, mean_value
-                    del frames, grays, flows, motion
+                            # del frame_crops_path, image_raw_array
+                            if visualization:
+                                frame = cv2.rectangle(frame,
+                                                      (c + area[2], r + area[0]),
+                                                      (c + area[2] + w, r + area[0] + h), 255, 2)
+                    #     del motion_crop, window_temp, c, r, w, h, mobject, mean_value
+                    # del frames, grays, flows, motion
+                    if visualization:
+                        cv2.imshow('high_motion', frame)
+                        cv2.waitKey(int(1))
+                        print(sample_path, index)
             writer.close()
-            del frames_path, frame_list
-        del video_name, class_name, tfrecord_name, tfrecord_path, txt_crop_path, imfloder_path
+        #     del frames_path, frame_list
+        # del video_name, class_name, tfrecord_name, tfrecord_path, txt_crop_path, imfloder_path
 
 
 def read_tfrecords(tfrecords_path_file_list, num_epochs=1, is_training=False, batch_size=64, preprocessing='standard'):
@@ -209,11 +216,8 @@ def main():
     # write_tfrecords(sample_path_list, CLIPS_TFRECS_PATH)
     basepy.non_output_multiprocessing(write_tfrecords, sample_path_list, CLIPS_TFRECS_PATH,
                                       num=int(mp.cpu_count()))
-    print('writing done')
 
-    # read tfrecords, examples:
-    # tfrecords_path_file_list = basepy.get_1tier_file_list(clips_tfrecords_path)
-    # a, b, c, d, e =read_tfrecords(tfrecords_path_file_list, num_epochs=1, is_training=False, batch_size=64)
+    print('----------Finish----------DebugSymbol----------')
 
 
 if __name__ == '__main__':
