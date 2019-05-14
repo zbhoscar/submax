@@ -22,7 +22,7 @@ DATASET_PATH = '/absolute/datasets/anoma'
 CLIPS_JSON_PATH = DATASET_PATH + '_motion_all_json_type_%d' % TYPE
 
 
-def write_all_clips2json(sample_path_list, tfrecords_path, visualization=False):
+def write_all_clips2json(sample_path_list, tfrecords_path):
     for sample_path in sample_path_list:
         # eg. sample_path: '/absolute/datasets/anoma/Abuse/Abuse001_x264'
         # eg. sample_path: '/absolute/datasets/anoma/normal_train/Normal_Videos308_3_x264'

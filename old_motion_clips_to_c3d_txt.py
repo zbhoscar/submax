@@ -25,7 +25,7 @@ import time
 # import numpy as np
 
 import c3d_model
-import zmotion_clips2tfrecords as base_io
+import old_motion_clips2tfrecords as base_io
 import data_io.basepy as basepy
 
 # # Basic model parameters as external flags.
