@@ -9,7 +9,6 @@ import data_io.basepy as basepy
 import data_io.basetf as basetf
 import zc3d_npy_base as base
 import zdefault_dict
-import zreduce_txt_to_npy as io
 
 # Basic model parameters as external flags.
 timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
@@ -56,7 +55,7 @@ def main(_):
     train_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'
     train_list = basepy.read_txt_lines2list(train_txt, sep=' ')
     train_list = base.reform_train_list(train_list, feature_path_list)
-    feature_dict = io.read_npy_file_path_list(train_list)
+    feature_dict = base.read_npy_file_path_list(train_list)
 
     anomaly_keys = [i for i in feature_dict.keys() if 'normal' not in i.lower()]
     normal_keys = [i for i in feature_dict.keys() if 'normal' in i.lower()]
@@ -141,9 +140,9 @@ def main(_):
 
                 batch_start, batch_end = step * D['batch_size'], step * D['batch_size'] + D['batch_size']
                 for j, i in enumerate(anomaly_list[batch_start:batch_end]):
-                    anomaly_in[j] = base.reform_np_array(feature_dict[i], reduce=D['segment_num'])
+                    anomaly_in[j] = base.reform_np_array(feature_dict[i], reform=D['segment_num'])
                 for j, i in enumerate(normal_list[batch_start:batch_end]):
-                    normal_in[j] = base.reform_np_array(feature_dict[i], reduce=D['segment_num'])
+                    normal_in[j] = base.reform_np_array(feature_dict[i], reform=D['segment_num'])
 
                 time2 = time.time()
                 l, _, a, c, d = sess.run([loss, train_op, mean_mil, l2, regu],

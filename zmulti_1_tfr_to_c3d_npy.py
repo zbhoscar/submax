@@ -19,26 +19,26 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os.path
+import os.path as osp
+import os
 import tensorflow as tf
 import time
-# import numpy as np
+import numpy as np
 
 import c3d_model
-import old_motion_clips2tfrecords as base_io
+import zmotion_clips_json2tfr as base_io
 import data_io.basepy as basepy
+import zmulti_0_tfr_make_list as base
 
 # # Basic model parameters as external flags.
 flags = tf.flags
-flags.DEFINE_string('txt_list_path', './temp/to_c3d_0.txt', 'read .tfr from txt')
+flags.DEFINE_string('txt_list_path', base.LIST_PATH % 1, 'read .tfr from txt')
 flags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 flags.DEFINE_integer('batch_size', 1, 'batch size.')
 FLAGS = flags.FLAGS
 
 # CLIPS_TFRECS_PATH = CLIPS_TFRECS_PATH.replace('datasets', 'ext3t')
-EVAL_RESULT_FOLDER = basepy.check_or_create_path(
-    base_io.CLIPS_TFRECS_PATH.replace('tfrecords', 'c3d_features').replace('datasets', 'ext3t'),
-    create=True, show=True)
+EVAL_RESULT_FOLDER = base_io.CLIPS_TFRECS_PATH.replace('tfr', 'c3d_features')
 
 
 def _variable_on_cpu(name, shape, initializer):
@@ -65,7 +65,7 @@ def get_input(file_path_list, num_epochs=None, is_training=True, batch_size=64):
     return classb, videob, indexb, cropb, cb, rb, wb, hb, imageb
 
 
-def run_test():
+def run_test(tfr_list, eval_result_folder, batch_size=1, set_gpu='0'):
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Remove 2 videos with no motion crop, in normal_train set
     #   empty folder / empty .tfr / no .txt
@@ -73,12 +73,9 @@ def run_test():
     # Split 9 videos in shorter length, in normal_train set
     # Empty tfrecords make no effects
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    list = basepy.read_txt_lines2list(FLAGS.txt_list_path)
-    list = [i[0] for i in list]
-    classb, videob, indexb, cropb, cb, rb, wb, hb, imageb = get_input(
-        list,
-        num_epochs=1, is_training=False, batch_size=FLAGS.batch_size)
-
+    classb, videob, indexb, cropb, cb, rb, wb, hb, imageb = get_input(tfr_list,
+                                                                      num_epochs=1, is_training=False,
+                                                                      batch_size=batch_size)
     with tf.variable_scope('var_name'):  # as var_scope:
         weights = {
             'wc1': _variable_with_weight_decay('wc1', [3, 3, 3, 3, 64], 0.04, 0.00),
@@ -116,61 +113,100 @@ def run_test():
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = 0.9
-    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.set_gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = set_gpu
     # os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
     saver = tf.train.Saver()
 
     init_op = (tf.local_variables_initializer(), tf.global_variables_initializer())
 
     with tf.Session(config=config) as sess:
-        # sess = tf.Session(config=config)
         sess.run(init_op)
 
         saver.restore(sess, model_name)
         print("Model Loading Done!")
 
+        feature_dict = {}
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-
         # one step to see
-        # a, b, c, d, e = sess.run([classb, videob, clipb, segb, features])
-        # print('wow')
-        print('program begins, timestamp %s' % time.asctime(time.localtime(time.time())))
-
+        # a, b, c, d, ac, ar, aw, ah, e = sess.run([classb, videob, indexb, cropb, cb, rb, wb, hb, features])
+        print('Program begins, timestamp %s ...' % time.asctime(time.localtime(time.time())))
         try:
             while True:
                 a, b, c, d, ac, ar, aw, ah, e = sess.run([classb, videob, indexb, cropb, cb, rb, wb, hb, features])
 
-                with tf.device('/cpu:0'):
-                    l2e = e     # e / np.linalg.norm(e, ord=2, axis=1, keepdims=True)
-                    for i in range(len(c)):
-                        class_video_name = str(a[i], encoding='utf-8') + '@' + str(b[i], encoding='utf-8')
-                        feature_txt_path = os.path.join(EVAL_RESULT_FOLDER, class_video_name + '.txt')
+                l2e = e / np.linalg.norm(e, ord=2, axis=1, keepdims=True)  # e
+                for i in range(len(c)):
+                    class_video_name = str(a[i], encoding='utf-8') + '@' + str(b[i], encoding='utf-8')
+                    np_as_line = np.append(l2e[i],
+                                           [c[i], d[i], ac[i], ar[i], aw[i], ah[i],
+                                            max(l2e[i]), min(l2e[i])]).astype('float32')
 
-                        _ = basepy.write_txt_add_lines(feature_txt_path, str(l2e[i].tolist()),
-                                                       str(c[i]), str(d[i]),
-                                                       str(ac[i]), str(ar[i]), str(aw[i]), str(ah[i]),
-                                                       str(max(l2e[i])), str(min(l2e[i])))
+                    if class_video_name in feature_dict.keys():
+                        feature_dict[class_video_name] = np.concatenate(
+                            (feature_dict[class_video_name], np.expand_dims(np_as_line, axis=0)))
+                    else:
+                        feature_dict[class_video_name] = np.expand_dims(np_as_line, axis=0)
 
-                    step += 1
-                    if time.time() - timestamp > 1800:
-                        localtime = time.asctime(time.localtime(time.time()))
-                        average_time_per_step = (time.time() - timestamp) / step
-                        print('program ongoing, timestamp %s, per step %s sec' % (localtime, average_time_per_step))
-                        step, timestamp = 0, time.time()
+                step += 1
+                if time.time() - timestamp > 1800:
+                    localtime = time.asctime(time.localtime(time.time()))
+                    average_time_per_step = (time.time() - timestamp) / step
+                    print('Program ongoing, timestamp %s, per step %s sec' % (localtime, average_time_per_step))
+                    step, timestamp = 0, time.time()
 
         except Exception as error:
             coord.request_stop(error)
-
         coord.request_stop()
         coord.join(threads)
 
-    print("done, at %s" % time.asctime(time.localtime(time.time())))
-    print('debug symbol')
+        print('Get in all %d keys in feature_dict' % len(feature_dict))
+        _ = [np.save(osp.join(eval_result_folder, key), feature_dict[key]) for key in feature_dict]
+
+    print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
 def main(_):
-    run_test()
+    run_test([i[0] for i in basepy.read_txt_lines2list(FLAGS.txt_list_path)],
+             basepy.check_or_create_path(EVAL_RESULT_FOLDER, create=True, show=True),
+             batch_size=FLAGS.batch_size, set_gpu=FLAGS.set_gpu)
+
+
+def compare_json_and_npy(json_folder_path, npy_folder_path):
+    import json
+
+    clip_len, reduce_num, reduce_method = 16, 1001, 'simple'
+
+    json_list = basepy.get_1tier_file_path_list(json_folder_path, '.json')
+    npy_list = basepy.get_1tier_file_path_list(npy_folder_path, '.npy')
+
+    for json_path in json_list:
+        basename = osp.basename(json_path).split('.')[0]
+        correspond = [i for i in npy_list if basename in i]
+
+        if correspond.__len__() != 1:
+            print('wrong length:', correspond)
+        else:
+            correspond = correspond[0]
+
+            with open(json_path, 'r') as f:
+                clips_info = json.load(f)
+            # how to reduce clip json
+            if reduce_method == 'simple':
+                clips_info = [
+                    i for i in clips_info if i[2] % clip_len == 0] if len(clips_info) > reduce_num * 3 else clips_info
+                clips_info = sorted(clips_info, key=lambda x: x[-1], reverse=True)[:reduce_num]
+            else:
+                raise ValueError('Wrong reduce method: %s' % reduce_method)
+
+            symbol_in_json = sorted(clips_info, key=lambda x: x[2], reverse=True)
+            symbol_in_json = [i[2] for i in symbol_in_json]
+
+            numpy = np.load(correspond)
+            symbol_in_numpy = numpy[np.argsort(numpy[:, 4096])][:, 4096]
+
+            if sum(symbol_in_numpy) != sum(symbol_in_json):
+                print("Wrong: %s, %s" % (json_path, correspond))
 
 
 if __name__ == '__main__':

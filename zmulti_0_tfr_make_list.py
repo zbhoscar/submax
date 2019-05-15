@@ -5,7 +5,7 @@ import random
 TFRECORD_PATH = '/absolute/datasets/anoma_motion_tfr_type_1_simple_1001'
 DST_TXT_PATH = TFRECORD_PATH.replace('tfr', 'c3d_features')
 LIST_PATH = './temp/tfr2c3d/to_c3d_%d.txt'
-DIVIDE_NUM = 8
+DIVIDE_NUM = 10
 
 
 def make_multi_tfr_list(todo_file_list, done_file_list, list_txt_path=None, divide_num=1, if_print=False):
@@ -26,13 +26,16 @@ def make_multi_tfr_list(todo_file_list, done_file_list, list_txt_path=None, divi
     if if_print:
         print('Files: %d in all, %d is done, %d remaining' %
               (len(todo_file_list), len(done_file_list), len(remaining_tfr_list)), '...')
-        print('Split list in %d .txt, writen in %s' % (divide_num, list_txt_path))
-
+        if list_txt_path:
+            print('Split list in %d .txt, writen in %s' % (divide_num, list_txt_path))
+        else:
+            print('Split list in %d .txt, no writing.' % divide_num)
 
     return remaining_tfr_list, name_list_in_num
 
 
 if __name__ == '__main__':
     make_multi_tfr_list(todo_file_list=basepy.get_1tier_file_path_list(TFRECORD_PATH, suffix='.tfr'),
-                        done_file_list=basepy.get_1tier_file_path_list(DST_TXT_PATH, suffix='.txt'),
+                        done_file_list=basepy.get_1tier_file_path_list(
+                            basepy.check_or_create_path(DST_TXT_PATH), suffix='.npy'),
                         list_txt_path=LIST_PATH, divide_num=DIVIDE_NUM, if_print=True)

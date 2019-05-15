@@ -8,6 +8,7 @@ import cv2
 import data_io.basepy as basepy
 import random
 import json
+import time
 
 CLIP_LEN, REDUCE_NUM, REDUCE_METHOD = [[16, 1001, 'simple']][0]
 
@@ -16,17 +17,20 @@ JSON_FILE_PATH = '/absolute/datasets/anoma_motion_all_json_type_1'
 CLIPS_TFRECS_PATH = JSON_FILE_PATH.replace('all_json', 'tfr') + '_%s_%d' % (REDUCE_METHOD, REDUCE_NUM)
 
 
-def write_tfrecords(json_path_list, tfrecords_path):
+def write_tfrecords(json_path_list, tfrecords_path=CLIPS_TFRECS_PATH, dataset_path=DATASET_PATH,
+                    reduce_method=REDUCE_METHOD, reduce_num=REDUCE_NUM, clip_len=CLIP_LEN):
     for json_path in json_path_list:
         # eg. json_path: '/absolute/datasets/anoma_motion_all_json_type_1/normal_train@Normal_Videos308_3_x264.json'
         # get original list form json:
         with open(json_path, 'r') as f:
             clips_info = json.load(f)
         # how to reduce clip json
-        if REDUCE_METHOD == 'simple':
+        if reduce_method == 'simple':
             clips_info = [
-                i for i in clips_info if i[2] % CLIP_LEN == 0] if len(clips_info) > REDUCE_NUM * 3 else clips_info
-            clips_info = sorted(clips_info, key=lambda x: x[-1], reverse=True)[:REDUCE_NUM]
+                i for i in clips_info if i[2] % clip_len == 0] if len(clips_info) > reduce_num * 3 else clips_info
+            clips_info = sorted(clips_info, key=lambda x: x[-1], reverse=True)[:reduce_num]
+        else:
+            raise ValueError('Wrong reduce method: %s' % reduce_method)
 
         tfrecord_name = str(osp.basename(json_path).split('.')[0])
         class_name, video_name = tfrecord_name.split('@')
@@ -34,7 +38,7 @@ def write_tfrecords(json_path_list, tfrecords_path):
         tfrecord_path = osp.join(tfrecords_path, tfrecord_name + '.tfr')
         motioncv_path = basepy.check_or_create_path(osp.join(tfrecords_path, tfrecord_name))
 
-        original_video_path = osp.join(DATASET_PATH, class_name, video_name)
+        original_video_path = osp.join(dataset_path, class_name, video_name)
         frames_path = basepy.get_1tier_file_path_list(original_video_path, suffix='.jpg')
         frame_list = sorted(frames_path, key=lambda x: int(osp.basename(x).split('.')[0]))
 
@@ -45,13 +49,13 @@ def write_tfrecords(json_path_list, tfrecords_path):
         if not osp.isfile(tfrecord_path):
             writer = tf.python_io.TFRecordWriter(tfrecord_path)
             for _, _, index, nj, c, r, w, h, _ in clips_info:
-                frames = [cv2.imread(frame_list[index + i])[r:r + h, c:c + w] for i in range(CLIP_LEN)]
+                frames = [cv2.imread(frame_list[index + i])[r:r + h, c:c + w] for i in range(clip_len)]
                 frame_crops_path = [
                     osp.join(motioncv_path,
                              tfrecord_name + '_' + str(index) + '_' + str(nj) + '_' + str(i) + '.jpg')
-                    for i in range(CLIP_LEN)]
+                    for i in range(clip_len)]
 
-                _ = [cv2.imwrite(frame_crops_path[i], frames[i]) for i in range(CLIP_LEN)]
+                _ = [cv2.imwrite(frame_crops_path[i], frames[i]) for i in range(clip_len)]
 
                 image_raw_array = [tf.gfile.FastGFile(i, 'rb').read() for i in frame_crops_path]
 
@@ -174,9 +178,9 @@ def main():
     random.shuffle(sample_path_list)
     # single processing
     # write_tfrecords(sample_path_list, CLIPS_TFRECS_PATH)
-    basepy.non_output_multiprocessing(write_tfrecords, sample_path_list, CLIPS_TFRECS_PATH,
-                                      num=int(mp.cpu_count()))
-    print('----------Finish----------DebugSymbol----------')
+    basepy.non_output_multiprocessing(write_tfrecords, sample_path_list, CLIPS_TFRECS_PATH, DATASET_PATH,
+                                      REDUCE_METHOD, REDUCE_NUM, CLIP_LEN, num=int(mp.cpu_count()))
+    print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
 if __name__ == '__main__':

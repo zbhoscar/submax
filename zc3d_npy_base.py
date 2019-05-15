@@ -124,16 +124,30 @@ def reform_train_list(org_txt_list, reform_txt_list):
     return new_txt_list
 
 
-def reform_np_array(np_array, reduce=1001, model='standard'):
-    if np_array.shape[0] > reduce:
+def reform_np_array(np_array, reform=1001, model='standard'):
+    if np_array.shape[0] > reform:
         np_copy = copy.deepcopy(np_array)
         np.random.shuffle(np_copy)
-        np_output = np_copy[:reduce, :4096]
+        np_output = np_copy[:reform, :4096]
+    elif np_array.shape[0] == reform:
+        np_output = np_array
     else:
-        quotient = reduce // np_array.shape[0]
+        quotient = reform // np_array.shape[0]
         np_temp = np_array.repeat(quotient, axis=0)
-        np_output = np.concatenate((np_temp, np_array[:reduce - len(np_temp)]), axis=0)[:, :4096]
-    return np_output / np.linalg.norm(np_output, ord=2, axis=1, keepdims=True)
+        np_output = np.concatenate((np_temp, np_array[:reform - len(np_temp)]), axis=0)[:, :4096]
+    return np_output
 
-# 'normal_test@Normal_Videos_781_x264'
-# 'Robbery@Robbery106_x264'
+
+def read_npy_file_path_list(npy_file_path_list, class_name_in_keys=True, sep='@'):
+    feed_data = {}
+    for npy_file_path in npy_file_path_list:
+        # '/absolute/ext3t/anoma_motion16_npy_rand_2019_c50/normal_train@Normal_Videos167_x264.npy'
+        # 'normal_train@Normal_Videos167_x264'
+        file_name = osp.basename(osp.splitext(npy_file_path)[0])
+        if class_name_in_keys:
+            feed_data[file_name] = np.load(npy_file_path)
+        else:
+            # Normal_Videos167_x264
+            file_name = osp.splitext(file_name.split(sep)[-1])[0]
+            feed_data[file_name] = np.load(npy_file_path)
+    return feed_data

@@ -5,6 +5,8 @@ import cv2
 import data_io.basepy as basepy
 import random
 import json
+import zmulti_0_tfr_make_list as test
+import time
 
 TYPE = [0, 1][1]
 # TRACK_WINDOW: cv2 format: c, r, w, h                    # -> start, -v start, -> length, -v length
@@ -65,14 +67,16 @@ def main():
     _ = basepy.check_or_create_path(CLIPS_JSON_PATH, create=True, show=True)
 
     # write tfrecords
-    sample_path_list = basepy.get_2tier_folder_path_list(DATASET_PATH)
-    random.shuffle(sample_path_list)
+    # sample_path_list = basepy.get_2tier_folder_path_list(DATASET_PATH)
+    remaining_list, _ = test.make_multi_tfr_list(basepy.get_2tier_folder_path_list(DATASET_PATH),
+                                                 basepy.get_1tier_file_path_list(CLIPS_JSON_PATH), if_print=True)
+    random.shuffle(remaining_list)
     # single processing
     # write_tfrecords(sample_path_list, CLIPS_TFRECS_PATH)
-    basepy.non_output_multiprocessing(write_all_clips2json, sample_path_list, CLIPS_JSON_PATH,
+    basepy.non_output_multiprocessing(write_all_clips2json, remaining_list, CLIPS_JSON_PATH,
                                       num=int(mp.cpu_count()))
 
-    print('----------Finish----------DebugSymbol----------')
+    print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
 if __name__ == '__main__':

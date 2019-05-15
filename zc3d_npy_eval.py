@@ -7,7 +7,6 @@ import time
 import data_io.basepy as basepy
 import data_io.basetf as basetf
 import zc3d_npy_base as base
-import zfeatures_cliptxt2segmentnpy as io
 import zdefault_dict
 
 # Basic model parameters as external flags.
@@ -37,7 +36,7 @@ def main(_):
     test_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'
     test_list = basepy.read_txt_lines2list(test_txt, sep='  ')
     test_list = base.reform_train_list(test_list, feature_path_list)
-    feature_dict = io.read_npy_file_path_list(test_list)
+    feature_dict = base.read_npy_file_path_list(test_list)
 
     test_keys = list(feature_dict.keys())
     label_keys = [0 if 'normal' in j.lower() else 1 for j in test_list]
@@ -69,7 +68,7 @@ def main(_):
             while True:
                 test_in = []
                 for i in test_keys[step * D['batch_size']:step * D['batch_size'] + D['batch_size']]:
-                    test_in.append(base.reform_np_array(feature_dict[i], reduce=D['segment_num']))
+                    test_in.append(base.reform_np_array(feature_dict[i], reform=D['segment_num']))
 
                 np_test_in = np.array(test_in, dtype='float32')
 

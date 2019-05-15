@@ -1,9 +1,7 @@
 import old_motion_clips2tfrecords as base_io
 import tensorflow as tf
 import time
-import data_io.basepy as basepy
 import os
-import os.path as osp
 
 def get_input(file_path_list, num_epochs=None, is_training=True, batch_size=64):
     with tf.name_scope('input'):
@@ -26,9 +24,9 @@ def run_test():
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     classb, videob, indexb, cropb, cb, rb, wb, hb, imageb = get_input(
-        ['/absolute/datasets/anoma_motion16_tfrecords/normal_train@Normal_Videos715_x264.tfr',
-         '/absolute/datasets/anoma_motion16_tfrecords/normal_train@Normal_Videos719_x264.tfr',
-         '/absolute/datasets/anoma_motion16_tfrecords/normal_train@Normal_Videos307_5_x264.tfr'],
+        ['/absolute/datasets/anoma_motion16_tfrecords_c50/normal_train@Normal_Videos715_x264.tfr',
+         '/absolute/datasets/anoma_motion16_tfrecords_c50/normal_train@Normal_Videos719_x264.tfr',
+         '/absolute/datasets/anoma_motion16_tfrecords_c50/normal_train@Normal_Videos307_5_x264.tfr'],
         num_epochs=1, is_training=False, batch_size=1)
 
     config = tf.ConfigProto()
@@ -72,6 +70,7 @@ def run_test():
                 #         print('program ongoing, timestamp %s, per step %s sec' % (localtime, average_time_per_step))
                 #         step, timestamp = 0, time.time()
                 print(a, b, c, d)
+                print(e[0].shape)
 
         except Exception as error:
             coord.request_stop(error)
