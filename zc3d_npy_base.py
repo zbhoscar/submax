@@ -130,7 +130,7 @@ def reform_np_array(np_array, reform=1001, model='standard'):
         np.random.shuffle(np_copy)
         np_output = np_copy[:reform, :4096]
     elif np_array.shape[0] == reform:
-        np_output = np_array
+        np_output = np_array[:, :4096]
     else:
         quotient = reform // np_array.shape[0]
         np_temp = np_array.repeat(quotient, axis=0)

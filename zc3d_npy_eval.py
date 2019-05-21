@@ -12,7 +12,7 @@ import zdefault_dict
 # Basic model parameters as external flags.
 tags = tf.flags
 F = tags.FLAGS
-tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190512114811',
+tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190516014752/190516014752.ckpt-11001',
                    'where to restore.')
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_integer('batch_size', 1, 'batch size.')
@@ -39,7 +39,7 @@ def main(_):
     feature_dict = base.read_npy_file_path_list(test_list)
 
     test_keys = list(feature_dict.keys())
-    label_keys = [0 if 'normal' in j.lower() else 1 for j in test_list]
+    label_keys = [0 if 'normal' in j.lower() else 1 for j in test_keys]
 
     with tf.name_scope('input'):
         input_test = tf.placeholder(tf.float32, [D['batch_size'], D['segment_num'], D['feature_len']], name='anom')
@@ -61,7 +61,7 @@ def main(_):
         sess.run(init_op)
         saver.restore(sess, RESTORE_FILE_PATH)
 
-        print('program begins, timestamp %s' % time.asctime(time.localtime(time.time())))
+        print('Program begins, timestamp %s' % time.asctime(time.localtime(time.time())))
 
         step, label_test = 0, []
         try:

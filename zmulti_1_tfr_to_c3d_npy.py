@@ -152,7 +152,7 @@ def run_test(tfr_list, eval_result_folder, batch_size=1, set_gpu='0'):
                 if time.time() - timestamp > 1800:
                     localtime = time.asctime(time.localtime(time.time()))
                     average_time_per_step = (time.time() - timestamp) / step
-                    print('Program ongoing, timestamp %s, per step %s sec' % (localtime, average_time_per_step))
+                    print('Program ongoing, timestamp %s, per step %.6f sec' % (localtime, average_time_per_step))
                     step, timestamp = 0, time.time()
 
         except Exception as error:
@@ -172,7 +172,7 @@ def main(_):
              batch_size=FLAGS.batch_size, set_gpu=FLAGS.set_gpu)
 
 
-def compare_json_and_npy(json_folder_path, npy_folder_path):
+def check_json_and_npy(json_folder_path, npy_folder_path):
     import json
 
     clip_len, reduce_num, reduce_method = 16, 1001, 'simple'

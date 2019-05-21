@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 import time
 from pprint import pprint
+# import multiprocessing as mp
 
 import data_io.basepy as basepy
 import data_io.basetf as basetf
@@ -15,18 +16,20 @@ timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
 tags = tf.flags
 # Net config
 tags.DEFINE_integer('batch_size', 64, 'batch size.')
-tags.DEFINE_integer('epoch_num', 1200, 'epoch number.')
-tags.DEFINE_float('learning_rate_base', 0.0005, 'learning rate base')
+tags.DEFINE_integer('epoch_num', 900, 'epoch number.')
+tags.DEFINE_float('learning_rate_base', 0.001, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
-tags.DEFINE_string('npy_file_path', '/absolute/ext3t/anoma_motion16_reduced_npy', 'npy file path')
+tags.DEFINE_string('npy_file_path',
+                   '/absolute/datasets/anoma_motion_c3d_features_type_1_simple_1001',
+                   'npy file path')
 # General
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path', osp.join('/absolute/tensorflow_models', timestamp, timestamp + '.ckpt'),
                    'where to store tensorflow models')
 # lasting
-tags.DEFINE_string('lasting', '/absolute/tensorflow_models/190510185136', 'a TensorFlow model path for lasting')
+tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')
 F = tags.FLAGS
 
 SAVE_FILE_PATH = F.save_file_path
@@ -122,23 +125,24 @@ def main(_):
     config = tf.ConfigProto(gpu_options=gpu_options)
     with tf.Session(config=config) as sess:
         sess.run(init_op)
-
         print('program begins, timestamp %s' % time.asctime(time.localtime(time.time())))
 
         if D['lasting']:
             restore_ckpt = basetf.get_ckpt_path(D['lasting'])
             saver_goon = tf.train.Saver()
             saver_goon.restore(sess, restore_ckpt)
-
         try:
+            max_index = min(len(anomaly_list), len(normal_list))
             while True:
                 step = sess.run(global_step)
                 time1 = time.time()
 
+                batch_start, batch_end = step * D['batch_size'], step * D['batch_size'] + D['batch_size']
+                if batch_end >= max_index:
+                    raise ValueError
+
                 anomaly_in = np.empty((D['batch_size'], D['segment_num'], D['feature_len']), dtype='float32')
                 normal_in = np.empty((D['batch_size'], D['segment_num'], D['feature_len']), dtype='float32')
-
-                batch_start, batch_end = step * D['batch_size'], step * D['batch_size'] + D['batch_size']
                 for j, i in enumerate(anomaly_list[batch_start:batch_end]):
                     anomaly_in[j] = base.reform_np_array(feature_dict[i], reform=D['segment_num'])
                 for j, i in enumerate(normal_list[batch_start:batch_end]):
@@ -157,6 +161,28 @@ def main(_):
         except ValueError:
             print('Model .ckpt save path: %s' % SAVE_FILE_PATH)
     print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
+
+
+def ones(keys, feature_dict):
+    # ext_num = min(D['batch_size'], mp.cpu_count())
+    # split_list = basepy.divide_list(list(range(D['batch_size'])), ext_num)
+    # while True:
+    # anoma_batch_keys = anomaly_list[batch_start:batch_end]
+    # norma_batch_keys = normal_list[batch_start:batch_end]
+    # split_keys = [[[anoma_batch_keys[i[0]], anoma_batch_keys[i[1]]],
+    #                [norma_batch_keys[i[0]], norma_batch_keys[i[1]]]] for i in split_list]
+    # p = mp.Pool(ext_num)
+    # results = []
+    # for keys in split_keys:
+    #     results.append(p.apply_async(ones, args=(keys, feature_dict)))
+    # p.close()
+    # p.join()
+    # anomaly_in = np.concatenate([i.get()[0] for i in results], axis=0)
+    # normal_in = np.concatenate([i.get()[1] for i in results], axis=0)
+    anoma_keys, norma_keys = keys
+    anoma_in = [base.reform_np_array(feature_dict[key], reform=D['segment_num']) for key in anoma_keys]
+    norma_in = [base.reform_np_array(feature_dict[key], reform=D['segment_num']) for key in norma_keys]
+    return np.array(anoma_in), np.array(norma_in)
 
 
 if __name__ == '__main__':
