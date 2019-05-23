@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 import time
 from pprint import pprint
+# import multiprocessing as mp
 
 import data_io.basepy as basepy
 import data_io.basetf as basetf
@@ -137,7 +138,7 @@ def main(_):
                 time1 = time.time()
 
                 batch_start, batch_end = step * D['batch_size'], step * D['batch_size'] + D['batch_size']
-                if batch_end > max_index:
+                if batch_end >= max_index:
                     raise ValueError
 
                 anomaly_in = np.empty((D['batch_size'], D['segment_num'], D['feature_len']), dtype='float32')
@@ -163,7 +164,6 @@ def main(_):
 
 
 def ones(keys, feature_dict):
-    # NO MULTIPROCESSING IN THIS PART
     # ext_num = min(D['batch_size'], mp.cpu_count())
     # split_list = basepy.divide_list(list(range(D['batch_size'])), ext_num)
     # while True:
