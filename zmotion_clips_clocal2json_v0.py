@@ -9,20 +9,20 @@ import time
 
 # TRACK_WINDOW: cv2 format: c, r, w, h                    # -> start, -v start, -> length, -v length
 # AREA_CROPS: numpy format: shape = (240, 320, 3)         # (h, w, channel)
-TRACK_WINDOW, AREA_CROPS, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE = (
-    ((70, 50, 50, 50),
-     ((0, 150, 0, 190), (0, 150, 130, 320), (90, 240, 0, 190), (90, 240, 130, 320)),
-     16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'standard_50'),
-    ((50, 30, 120, 120),
-     ((0, 180, 0, 220), (0, 180, 100, 320), (60, 240, 0, 220), (60, 240, 100, 320)),
-     16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'standard_120'),
-    ((50, 30, 120, 120),
-     ((0, 180, 0, 220), (0, 180, 100, 320), (60, 240, 0, 220), (60, 240, 100, 320)),
-     16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85_60'))[2]
+# TRACK_WINDOW, AREA_CROPS, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE = (
+#     ((70, 50, 50, 50),
+#      ((0, 150, 0, 190), (0, 150, 130, 320), (90, 240, 0, 190), (90, 240, 130, 320)),
+#      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'standard_50'),
+#     ((50, 30, 120, 120),
+#      ((0, 180, 0, 220), (0, 180, 100, 320), (60, 240, 0, 220), (60, 240, 100, 320)),
+#      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'standard_120'),
+#     ((50, 30, 120, 120),
+#      ((0, 180, 0, 220), (0, 180, 100, 320), (60, 240, 0, 220), (60, 240, 100, 320)),
+#      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85_60'))[2]
 
-DATASET_PATH = '/absolute/datasets/anoma'
+DATASET_PATH = '/absolute/datasets/UCFCrime2Local'
 # CLIPS_JSON_PATH = CLIPS_JSON_PATH.replace('datasets', 'ext3t')
-CLIPS_JSON_PATH = DATASET_PATH + '_motion_%s_all_json' % TYPE
+CLIPS_JSON_PATH = DATASET_PATH + '_motion_all_json'
 
 
 def write_all_clips2json(sample_path_list, tfrecords_path):
