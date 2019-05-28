@@ -180,7 +180,7 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
             print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
-def one_json_clip_to_np(json_clip, dataset_path=DATASET_PATH, clip_len=16):
+def one_json_clip_to_np(json_clip, dataset_path=None, clip_len=16, visualization=False):
     out_put = []
     # for class_name, video_name, index, nj, c, r, w, h, mean_motion in json_clips:
     class_name, video_name, index, nj = json_clip[:4]
@@ -196,12 +196,21 @@ def one_json_clip_to_np(json_clip, dataset_path=DATASET_PATH, clip_len=16):
         clips_area = [[i, clips_area[j + 1], clips_area[j + 2], clips_area[j + 3]]
                       for j, i in enumerate(clips_area) if j % 4 == 0]
 
-    for c, r, w, h in clips_area:
-        one = [cv2.resize(cv2.imread(frame_list[index + i])[r:r + h, c:c + w],
-                          (112, 112))
-               for i in range(clip_len)]
-        out_put.append(one)
-    return np.array(out_put, dtype='float32')
+    if visualization:  # if True, dataset_path MUST a copy of original dataset_path
+        for i in range(clip_len):
+            image_path = frame_list[index + i]
+            image_data = cv2.imread(image_path)
+            for j, [c, r, w, h] in enumerate(clips_area):
+                image_data = cv2.rectangle(image_data, (c, r), (c + w, r + h), int(255 / (j + 1)), 2)
+            cv2.imwrite(image_path, image_data)
+        return None
+    else:
+        for c, r, w, h in clips_area:
+            one = [cv2.resize(cv2.imread(frame_list[index + i])[r:r + h, c:c + w],
+                              (112, 112))
+                   for i in range(clip_len)]
+            out_put.append(one)
+        return np.array(out_put, dtype='float32')
 
 
 def main(_):
@@ -218,6 +227,23 @@ def main(_):
     p.join()
 
     print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
+
+
+def json_visualization(class_at_video='RoadAccidents@RoadAccidents043_x264',
+                       dataset_path=DATASET_PATH,
+                       json_clip_path=JSON_FILE_LIST,
+                       visualization_path='./temp/test_visualization'):
+    import shutil
+
+    class_name, video_name = class_at_video.split('@')
+    orig_path, visual_path = osp.join(dataset_path, class_name, video_name), \
+                             osp.join(visualization_path, class_name, video_name)
+    shutil.copytree(orig_path, visual_path)
+
+    json_file_path = osp.join(json_clip_path, class_at_video + '.json')
+    clips_list_in_one = get_merge_list([json_file_path], reduce_method=REDUCE_METHOD, reduce_num=REDUCE_NUM)
+    for one_clip in clips_list_in_one:
+        _ = one_json_clip_to_np(one_clip, visualization_path, clip_len=8, visualization=True)
 
 
 if __name__ == '__main__':
