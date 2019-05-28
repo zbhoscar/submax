@@ -31,11 +31,11 @@ import cv2
 import data_io.basepy as basepy
 import multiprocessing as mp
 
-SET_GPU = [[(0, 2), (1, 2), (2, 2), (3, 2)],
-           [(0, 3), (3, 4)]][1]
-BATCH_SIZE = 1
-JSON_FILE_LIST = '/home/zbh/Desktop/absolute/datasets/anoma_motion_all_json_type_1'
-EVAL_RESULT_FOLDER = '/absolute/datasets/anoma_motion_c3d_features_type_1_simple_1001_new'
+SET_GPU = [(0, 9), (1, 0), (2, 1), (3, 9)]
+BATCH_SIZE = 1  # MUST be 1 to fit pyramid
+JSON_FILE_LIST = '/home/zbh/Desktop/absolute/datasets/anoma_motion_pyramid_120_85_60_all_json'
+REDUCE_METHOD, REDUCE_NUM = (('simple', 1001), ('simple', 512))[0]
+EVAL_RESULT_FOLDER = JSON_FILE_LIST.replace('all_json', 'c3d_npy_%s_%d' % (REDUCE_METHOD, REDUCE_NUM))
 DATASET_PATH = '/home/zbh/Desktop/absolute/datasets/anoma'
 
 SPLIT_NUM, GPU_LIST = sum([i[1] for i in SET_GPU]), []
@@ -77,12 +77,12 @@ def get_merge_list(json_path_list, reduce_method='simple', clip_len=16, reduce_n
 
 
 def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_size=1, set_gpu='0'):
-    clips_list_in_one = get_merge_list(json_path_list)
+    clips_list_in_one = get_merge_list(json_path_list, reduce_method=REDUCE_METHOD, reduce_num=REDUCE_NUM)
     # MAKE SURE NPY WRITING WORK
     clips_list_in_one = clips_list_in_one + clips_list_in_one[:batch_size]
 
     with tf.name_scope('input'):
-        image_batch = tf.placeholder(tf.float32, [batch_size, 16, 112, 112, 3], name='image_batch')
+        image_batch = tf.placeholder(tf.float32, [None, 16, 112, 112, 3], name='image_batch')
 
     with tf.variable_scope('var_name'):  # as var_scope:
         weights = {
@@ -115,7 +115,6 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
     features = c3d_model.inference_c3d(image_batch, 0.6, 1, weights, biases)
     # norm_score = tf.nn.softmax(logits)
 
-    timestamp, step = time.time(), 0
     model_name = "./sports1m_finetuning_ucf101.model"
 
     config = tf.ConfigProto()
@@ -134,31 +133,26 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
         print("Model Loading Done!")
 
         print('Program begins, timestamp %s ...' % time.asctime(time.localtime(time.time())))
+        timestamp, step, step_stamp, stop_try = time.time(), 0, 0, ValueError
+        np_mean, dict_key, max_index = np.load('./crop_mean.npy'), None, len(clips_list_in_one)
         try:
-            sym_error = ValueError
-            max_index = len(clips_list_in_one)
-            np_mean = np.load('./crop_mean.npy')
-            dict_key = None
             while True:
+                # batch_size MUST be 1
                 batch_start, batch_end = step * batch_size, step * batch_size + batch_size
-
                 if batch_end > max_index:
-                    raise sym_error
+                    raise stop_try
 
                 clips_list_batch = clips_list_in_one[batch_start:batch_end]
-
-                image_data = json_clips_to_np(clips_list_batch, dataset_path)
-
-                rand1, rand2 = np.random.randint(0, 8), np.random.randint(0, 8)
-                image_data = image_data[:, :, rand1:rand1 + 112, rand2:rand2 + 112, :] - np_mean
-
+                image_data = one_json_clip_to_np(clips_list_batch, dataset_path) - np_mean
                 e = sess.run(features, feed_dict={image_batch: image_data})
 
                 l2e = e / np.linalg.norm(e, ord=2, axis=1, keepdims=True)  # e
+                l2e = np.mean(l2e, axis=0, keepdims=True)
+                # l2e = np.random.rand(1, 4105).astype('float32')
                 for j, [class_name, video_name, index, nj, c, r, w, h, mean_motion] in enumerate(clips_list_batch):
                     class_video_name = class_name + '@' + video_name
                     np_as_line = np.append(l2e[j], np.array(
-                        [index, nj, c, r, w, h, mean_motion, max(l2e[j]), min(l2e[j])], dtype='float32'))
+                        [index, nj, c, r, w, h, mean_motion, max(e[j]), min(e[j])], dtype='float32'))
 
                     if class_video_name != dict_key and dict_key is None:
                         dict_value = np.expand_dims(np_as_line, axis=0)
@@ -167,30 +161,45 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
                         dict_value = np.concatenate((dict_value, np.expand_dims(np_as_line, axis=0)))
                     elif class_video_name != dict_key and dict_key is not None:
                         np.save(osp.join(eval_result_folder, dict_key), dict_value)
+                        # if set_gpu == '2':
+                        #     print('File %s.npy done, at step %d, next %s.' % (dict_key, step, class_video_name))
+                        del dict_value, dict_key
                         dict_value = np.expand_dims(np_as_line, axis=0)
                         dict_key = class_video_name
                     else:
-                        raise sym_error
+                        raise stop_try
 
                 step += 1
                 if time.time() - timestamp > 1800:
                     localtime = time.asctime(time.localtime(time.time()))
-                    average_time_per_step = (time.time() - timestamp) / step
-                    print('Program ongoing, timestamp %s, per step %.6f sec' % (localtime, average_time_per_step))
-                    step, timestamp = 0, time.time()
-
-        except sym_error:
+                    average_time_per_step = (time.time() - timestamp) / (step - step_stamp)
+                    print('Program ongoing, timestamp %s, per step %.6f sec, %d steps in all'
+                          % (localtime, average_time_per_step, step))
+                    step_stamp, timestamp = step, time.time()
+        except stop_try:
             print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
-def json_clips_to_np(json_clips, dataset_path=None, clip_len=16):
+def one_json_clip_to_np(json_clip, dataset_path=DATASET_PATH, clip_len=16):
     out_put = []
-    for class_name, video_name, index, nj, c, r, w, h, mean_motion in json_clips:
-        original_video_path = osp.join(dataset_path, class_name, video_name)
-        frames_path = basepy.get_1tier_file_path_list(original_video_path, suffix='.jpg')
-        frame_list = sorted(frames_path, key=lambda x: int(osp.basename(x).split('.')[0]))
+    # for class_name, video_name, index, nj, c, r, w, h, mean_motion in json_clips:
+    class_name, video_name, index, nj = json_clip[:4]
+    original_video_path = osp.join(dataset_path, class_name, video_name)
+    frames_path = basepy.get_1tier_file_path_list(original_video_path, suffix='.jpg')
+    frame_list = sorted(frames_path, key=lambda x: int(osp.basename(x).split('.')[0]))
 
-        one = [cv2.imread(frame_list[index + i])[r:r + h, c:c + w] for i in range(clip_len)]
+    clips_area = json_clip[4:-1]
+    if len(clips_area) % 4 != 0:
+        raise ValueError('Wrong json clip: ', json_clip)
+    else:
+        # [5, 6, 7, 8, 9, 10, 11, 12] --> [[5, 6, 7, 8], [9, 10, 11, 12]]
+        clips_area = [[i, clips_area[j + 1], clips_area[j + 2], clips_area[j + 3]]
+                      for j, i in enumerate(clips_area) if j % 4 == 0]
+
+    for c, r, w, h in clips_area:
+        one = [cv2.resize(cv2.imread(frame_list[index + i])[r:r + h, c:c + w],
+                          (112, 112))
+               for i in range(clip_len)]
         out_put.append(one)
     return np.array(out_put, dtype='float32')
 
@@ -201,6 +210,7 @@ def main(_):
         basepy.get_1tier_file_path_list(basepy.check_or_create_path(EVAL_RESULT_FOLDER), suffix='.npy'),
         divide_num=SPLIT_NUM, if_print=True)
 
+    # run_test(remaining_list, DATASET_PATH, EVAL_RESULT_FOLDER, BATCH_SIZE, '3')
     p = mp.Pool(SPLIT_NUM)
     for j, em in enumerate(split_list):
         p.apply_async(run_test, args=(em, DATASET_PATH, EVAL_RESULT_FOLDER, BATCH_SIZE, GPU_LIST[j]))
