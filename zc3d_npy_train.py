@@ -21,7 +21,7 @@ tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
 tags.DEFINE_string('npy_file_path',
-                   '/absolute/datasets/anoma_motion_c3d_features_type_1_simple_1001',
+                   '/absolute/datasets/anoma_motion_pyramid_120_85_60_c3d_npy_simple_1001',
                    'npy file path')
 # General
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
