@@ -14,7 +14,7 @@ import zdefault_dict
 timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
 tags = tf.flags
 # Net config
-tags.DEFINE_integer('batch_size', 64, 'batch size.')
+tags.DEFINE_integer('batch_size', 128, 'batch size.')
 tags.DEFINE_integer('epoch_num', 900, 'epoch number.')
 tags.DEFINE_float('learning_rate_base', 0.001, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
@@ -23,12 +23,17 @@ tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
 tags.DEFINE_string('npy_file_path',
                    '/absolute/datasets/anoma_motion_pyramid_120_85_60_c3d_npy_simple_1001',
                    'npy file path')
+tags.DEFINE_string('training_list',
+                   '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt',
+                   'training list, corresponding to npy_file_path')
 # General
-tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
+tags.DEFINE_string('set_gpu', '3', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path', osp.join('/absolute/tensorflow_models', timestamp, timestamp + '.ckpt'),
                    'where to store tensorflow models')
 # lasting
 tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')
+# every ? epochs to save
+tags.DEFINE_integer('saving_interval', 20, 'every ? epochs to save')
 F = tags.FLAGS
 
 SAVE_FILE_PATH = F.save_file_path
@@ -45,6 +50,8 @@ D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              lambda2=0.00008,
                                                              fusion=F.fusion,
                                                              lasting=F.lasting,
+                                                             training_list=F.training_list,
+                                                             saving_interval=F.saving_interval,
                                                              )
 
 print('D values:')
@@ -54,8 +61,8 @@ _ = [print(i, ":", D[i]) for i in D]
 def main(_):
     # with tf.device('/cpu:0'):
     feature_path_list = basepy.get_1tier_file_path_list(D['npy_file_path'], suffix='.npy')
-    train_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'
-    train_list = basepy.read_txt_lines2list(train_txt, sep=' ')
+    # train_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'
+    train_list = basepy.read_txt_lines2list(D['training_list'], sep=' ')
     train_list = base.reform_train_list(train_list, feature_path_list)
     feature_dict = base.read_npy_file_path_list(train_list)
 
@@ -64,6 +71,12 @@ def main(_):
 
     anomaly_list = basepy.repeat_list_for_epochs(anomaly_keys, epoch_num=D['epoch_num'], shuffle=True)
     normal_list = basepy.repeat_list_for_epochs(normal_keys, epoch_num=D['epoch_num'], shuffle=True)
+
+    samples_in_one_epoch = min(len(anomaly_keys), len(normal_keys))
+    step2show = [int(i * samples_in_one_epoch / D['batch_size'])
+                 for i in range(D['epoch_num']) if i % int(D['saving_interval'] / 3) == 0]
+    step2save = [int(i * samples_in_one_epoch / D['batch_size'])
+                 for i in range(D['epoch_num']) if i % D['saving_interval'] == 0]
 
     with tf.name_scope('input'):
         input_anom = tf.placeholder(tf.float32, [D['batch_size'], D['segment_num'], D['feature_len']], name='anom')
@@ -116,7 +129,7 @@ def main(_):
     pprint(tf.trainable_variables())
     print('Model .ckpt save path: %s' % SAVE_FILE_PATH)
 
-    saver = tf.train.Saver(max_to_keep=20)
+    saver = tf.train.Saver(max_to_keep=100)
 
     init_op = tf.global_variables_initializer()
     os.environ["CUDA_VISIBLE_DEVICES"] = D['set_gpu']
@@ -150,12 +163,13 @@ def main(_):
                 time2 = time.time()
                 l, _, a, c, d = sess.run([loss, train_op, mean_mil, l2, regu],
                                          feed_dict={input_anom: anomaly_in, input_norm: normal_in})
-                if step % 100 == 0 or (step % 10 == 0 and step < 100):
+                if step in step2show:
                     print('After %5d steps, loss = %.5e, mil = %.5e, l2 = %.5e, regu = %.5e, '
                           'feed: %.3fsec, train: %.3fsec' %
                           (step, l, a, c, d, time2 - time1, time.time() - time2))
-                if step % 500 == 0:
-                    print('Save tfrecords at step %s' % step)
+                if step in step2save:
+                    print('Save tfrecords at step %5d / %4d epochs.'
+                          % (step, D['saving_interval'] * step2save.index(step)))
                     saver.save(sess, SAVE_FILE_PATH, global_step=global_step)
         except ValueError:
             print('Model .ckpt save path: %s' % SAVE_FILE_PATH)

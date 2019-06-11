@@ -7,7 +7,7 @@ import numpy as np
 import json
 import time
 
-VIDEO_FOLDER_SET = basepy.get_2tier_folder_path_list('/absolute/datasets/anoma')
+VIDEO_FOLDER_SET = basepy.get_2tier_folder_path_list('/absolute/datasets/UCSD_Anomaly_Dataset.v1p2/UCSDped1')
 
 VIDEO_FOLDER_PATH = VIDEO_FOLDER_SET[np.random.randint(0, len(VIDEO_FOLDER_SET))]
 # VIDEO_FOLDER_PATH = '/absolute/datasets/anoma/Stealing/Stealing075_x264'
@@ -18,9 +18,9 @@ VIDEO_FOLDER_PATH = [VIDEO_FOLDER_PATH]
 CLIPS_TFRECS_PATH = '/absolute/datasets/anoma_motion16_tfrecords'
 
 
-def high_motion_visualization(sample_path_list=VIDEO_FOLDER_PATH, tfrecords_path='./temp/high_motion_visualization'):
-    _ = basepy.check_or_create_path(tfrecords_path)
-    _ = base.write_tfrecords(sample_path_list, tfrecords_path, visualization=True)
+# def high_motion_visualization(sample_path_list=VIDEO_FOLDER_PATH, tfrecords_path='./temp/high_motion_visualization'):
+#     _ = basepy.check_or_create_path(tfrecords_path)
+#     _ = base.write_tfrecords(sample_path_list, tfrecords_path, visualization=True)
 
 
 def get_video_info_json(video_folder_all=VIDEO_FOLDER_SET):

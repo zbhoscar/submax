@@ -34,10 +34,10 @@ import multiprocessing as mp
 JSON_FILE_LIST, REDUCE_METHOD, REDUCE_NUM, DATASET_PATH = (
     ('/absolute/datasets/anoma_motion_pyramid_120_85_60_all_json', 'simple', 1001, '/absolute/datasets/anoma'),
     ('/absolute/datasets/UCFCrime2Local_motion_all_json', 'crime2local', 1001, '/absolute/datasets/anoma'),
-    'TYPE')[1]
+    'TYPE')[0]
 EVAL_RESULT_FOLDER = JSON_FILE_LIST.replace('all_json', 'c3d_npy_%s_%d' % (REDUCE_METHOD, REDUCE_NUM))
 
-SET_GPU = [(0, 3), (1, 0), (2, 0), (3, 4)]
+SET_GPU = [(0, 3), (1, 0), (2, 0), (3, 3)]
 SPLIT_NUM, GPU_LIST, BATCH_SIZE = sum([i[1] for i in SET_GPU]), [], 1   # BATCH_SIZE: MUST be 1 to FIT pyramid
 for gpu_id, num in SET_GPU:
     GPU_LIST.extend([str(gpu_id)] * num)
@@ -129,7 +129,7 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
                 e = sess.run(features, feed_dict={image_batch: image_data})
 
                 l2e = e / np.linalg.norm(e, ord=2, axis=1, keepdims=True)  # e
-                l2e = np.mean(l2e, axis=0, keepdims=True)
+                l2e = np.max(l2e, axis=0, keepdims=True)
                 # l2e = np.random.rand(1, 4105).astype('float32')
                 for j, one_clip in enumerate(clips_list_batch):
                     class_name, video_name = one_clip[:2]

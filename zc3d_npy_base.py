@@ -133,7 +133,7 @@ def reform_np_array(np_array, reform=1001, model='standard'):
         np_output = np_array[:, :4096]
     else:
         quotient = reform // np_array.shape[0]
-        np_temp = np_array.repeat(quotient, axis=0)
+        np_temp = np.concatenate((np_array, np_array.repeat(quotient - 1, axis=0)), axis=0)
         np_output = np.concatenate((np_temp, np_array[:reform - len(np_temp)]), axis=0)[:, :4096]
     return np_output
 

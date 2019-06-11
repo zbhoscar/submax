@@ -1,9 +1,5 @@
 import os.path as osp
-import multiprocessing as mp
-import numpy as np
-import cv2
 import data_io.basepy as basepy
-import random
 import json
 import time
 
