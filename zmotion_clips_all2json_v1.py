@@ -9,18 +9,24 @@ import time
 
 # TRACK_WINDOW: cv2 format: c, r, w, h                    # -> start, -v start, -> length, -v length
 # AREA_CROPS: numpy format: shape = (240, 320, 3)         # (h, w, channel)
-TRACK_WINDOW, AREA_CROPS, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE = (
-    ((70, 50, 50, 50),
+# 0, (h + edge) / 2, (h - edge) / 2, h , 0, (w + edge) / 2, (w - edge) / 2 , w
+DATASET_PATH, FRAME_SUFFIX, TRACK_WINDOW, AREA_CROPS, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE = (
+    ('/absolute/datasets/anoma', '.jpg', (70, 50, 50, 50),
      ((0, 150, 0, 190), (0, 150, 130, 320), (90, 240, 0, 190), (90, 240, 130, 320)),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'standard_50'),
-    ((50, 30, 120, 120),
+    ('/absolute/datasets/anoma', '.jpg', (50, 30, 120, 120),
      ((0, 180, 0, 220), (0, 180, 100, 320), (60, 240, 0, 220), (60, 240, 100, 320)),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'standard_120'),
-    ((50, 30, 120, 120),
+    ('/absolute/datasets/anoma', '.jpg', (50, 30, 120, 120),
      ((0, 180, 0, 220), (0, 180, 100, 320), (60, 240, 0, 220), (60, 240, 100, 320)),
-     16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85_60'))[2]
+     16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85_60'),
+    ('/absolute/datasets/UCSDped1', '.tif', (40, 20, 80, 80),
+     ((0, 119, 0, 159), (0, 119, 79, 238), (39, 158, 0, 159), (39, 158, 79, 238)),
+     16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'standard_80'),
+    ('/absolute/datasets/UCSDped1', '.tif', (40, 20, 80, 80),
+     ((0, 119, 0, 159), (0, 119, 79, 238), (39, 158, 0, 159), (39, 158, 79, 238)),
+     16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_80_60'))[4]
 
-DATASET_PATH = '/absolute/datasets/anoma'
 # CLIPS_JSON_PATH = CLIPS_JSON_PATH.replace('datasets', 'ext3t')
 CLIPS_JSON_PATH = DATASET_PATH + '_motion_%s_all_json' % TYPE
 
@@ -35,7 +41,7 @@ def write_all_clips2json(sample_path_list, tfrecords_path):
         tfrecord_name = '%s@%s' % (class_name, video_name)
         tfrecord_path = osp.join(tfrecords_path, tfrecord_name + '.json')
 
-        frames_path = basepy.get_1tier_file_path_list(sample_path, suffix='.jpg')
+        frames_path = basepy.get_1tier_file_path_list(sample_path, suffix=FRAME_SUFFIX)
         frame_list = sorted(frames_path, key=lambda x: int(osp.basename(x).split('.')[0]))
 
         # get every STEP frame index

@@ -10,6 +10,13 @@ import data_io.basetf as basetf
 import zc3d_npy_base as base
 import zdefault_dict
 
+NPY_FILE_PATH, TRAINING_LIST = (
+    ('/absolute/datasets/anoma_motion_pyramid_120_85_60_c3d_npy_simple_1001',
+     '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'),
+    ('/absolute/datasets/UCSDped1_motion_pyramid_80_60_c3d_npy_simple_100',
+     'abc'),
+    'ID')[1]
+
 # Basic model parameters as external flags.
 timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
 tags = tf.flags
@@ -20,12 +27,8 @@ tags.DEFINE_float('learning_rate_base', 0.001, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
-tags.DEFINE_string('npy_file_path',
-                   '/absolute/datasets/anoma_motion_pyramid_120_85_60_c3d_npy_simple_1001',
-                   'npy file path')
-tags.DEFINE_string('training_list',
-                   '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt',
-                   'training list, corresponding to npy_file_path')
+tags.DEFINE_string('npy_file_path', NPY_FILE_PATH, 'npy file path')
+tags.DEFINE_string('training_list', TRAINING_LIST, 'training list, corresponding to npy_file_path')
 # General
 tags.DEFINE_string('set_gpu', '3', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path', osp.join('/absolute/tensorflow_models', timestamp, timestamp + '.ckpt'),

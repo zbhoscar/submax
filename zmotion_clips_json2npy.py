@@ -34,11 +34,12 @@ import multiprocessing as mp
 JSON_FILE_LIST, REDUCE_METHOD, REDUCE_NUM, DATASET_PATH = (
     ('/absolute/datasets/anoma_motion_pyramid_120_85_60_all_json', 'simple', 1001, '/absolute/datasets/anoma'),
     ('/absolute/datasets/UCFCrime2Local_motion_all_json', 'crime2local', 1001, '/absolute/datasets/anoma'),
-    'TYPE')[0]
+    ('/absolute/datasets/UCSDped1_motion_pyramid_80_60_all_json', 'simple', 100, '/absolute/datasets/UCSDped1'),
+    'TYPE')[2]
 EVAL_RESULT_FOLDER = JSON_FILE_LIST.replace('all_json', 'c3d_npy_%s_%d' % (REDUCE_METHOD, REDUCE_NUM))
 
-SET_GPU = [(0, 3), (1, 0), (2, 0), (3, 3)]
-SPLIT_NUM, GPU_LIST, BATCH_SIZE = sum([i[1] for i in SET_GPU]), [], 1   # BATCH_SIZE: MUST be 1 to FIT pyramid
+SET_GPU = [(0, 2), (1, 0), (2, 0), (3, 0)]
+SPLIT_NUM, GPU_LIST, BATCH_SIZE = sum([i[1] for i in SET_GPU]), [], 1  # BATCH_SIZE: MUST be 1 to FIT pyramid
 for gpu_id, num in SET_GPU:
     GPU_LIST.extend([str(gpu_id)] * num)
 
@@ -192,12 +193,22 @@ def multi_json_clip_to_np(json_clips, dataset_path=None, clip_len=16, visualizat
                            for json_clip in json_clips])
 
 
+def suffix_in_dataset_path(dataset_path):
+    if 'anoma' in dataset_path:
+        return '.jpg'
+    elif 'ped' in dataset_path:
+        return '.tif'
+    else:
+        raise ValueError('Undefined suffix in %s' % dataset_path)
+
+
 def one_json_clip_to_np(json_clip, dataset_path=None, clip_len=16, visualization=False):
+    frame_suffix = suffix_in_dataset_path(dataset_path)
     out_put = []
     # for class_name, video_name, index, nj, c, r, w, h, mean_motion in json_clips:
     class_name, video_name, index, nj = json_clip[:4]
     original_video_path = osp.join(dataset_path, class_name, video_name)
-    frames_path = basepy.get_1tier_file_path_list(original_video_path, suffix='.jpg')
+    frames_path = basepy.get_1tier_file_path_list(original_video_path, suffix=frame_suffix)
     frame_list = sorted(frames_path, key=lambda x: int(osp.basename(x).split('.')[0]))
 
     clips_area = json_clip[4:-1]
