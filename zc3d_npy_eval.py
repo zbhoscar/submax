@@ -9,11 +9,12 @@ import zc3d_npy_base as base
 import zdefault_dict
 
 TEST_LIST = ('/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
-             '/home/zbh/Desktop/absolute/datasets/UCFCrime2Local/Test_split_AD.txt')[0]
+             '/home/zbh/Desktop/absolute/datasets/UCFCrime2Local/Test_split_AD.txt',
+             '/absolute/datasets/UCSDped2_split_list/10_fold_001/v00_test.txt')[2]
 # Basic model parameters as external flags.
 tags = tf.flags
 F = tags.FLAGS
-tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190601162431',
+tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190624093140',
                    'where to restore.')
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_integer('batch_size', 1, 'batch size.')
@@ -56,7 +57,8 @@ def main(_):
     print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
-def eval_one_ckpt(test_keys, label_keys, feature_dict, d, ckpt_file=None, if_print=True, if_draw=True, sample_num=1000):
+def eval_one_ckpt(test_keys, label_keys, feature_dict, d, ckpt_file=None,
+                  if_print=True, if_draw=True, sample_num=1000, write_to=None):
     with tf.name_scope('input'):
         input_test = tf.placeholder(tf.float32, [d['batch_size'], d['segment_num'], d['feature_len']], name='anom')
 
@@ -66,7 +68,6 @@ def eval_one_ckpt(test_keys, label_keys, feature_dict, d, ckpt_file=None, if_pri
                                         feature_len=d['feature_len'],
                                         segment_num=d['segment_num'],
                                         is_training=False)
-
     saver = tf.train.Saver()
 
     init_op = tf.global_variables_initializer()
@@ -82,16 +83,21 @@ def eval_one_ckpt(test_keys, label_keys, feature_dict, d, ckpt_file=None, if_pri
         step, label_test = 0, []
         try:
             while True:
-                test_in, info_in = [], []
+                test_in, info_in, = [], []
                 for i in test_keys[step * d['batch_size']:step * d['batch_size'] + d['batch_size']]:
                     test_in.append(base.reform_np_array(feature_dict[i], reform=d['segment_num']))
-                    info_in.append(feature_dict[i][:,4096:])
+                    info_in.append(feature_dict[i][:, 4096:])
 
                 np_test_in = np.array(test_in, dtype='float32')
 
                 s = sess.run(score_anomaly, feed_dict={input_test: np_test_in})
                 # in form of LIST:
                 label_test.append(np.max(s))
+                # make probability .npy
+                if write_to:
+                    ins_results = np.hstack((s[:, :len(info_in[0])].T, info_in[0]))
+                    np.save(basepy.check_or_create_path(osp.join(osp.dirname(ckpt_file), write_to)),
+                            ins_results)
 
                 step += 1
         except ValueError:
@@ -109,6 +115,9 @@ def eval_one_ckpt(test_keys, label_keys, feature_dict, d, ckpt_file=None, if_pri
         print(precision_list)
 
     return t, f, auc, auc_, precision_list
+
+
+# def eval_visualization():
 
 
 if __name__ == '__main__':

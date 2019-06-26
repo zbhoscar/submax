@@ -13,15 +13,15 @@ import zdefault_dict
 NPY_FILE_PATH, TRAINING_LIST = (
     ('/absolute/datasets/anoma_motion_pyramid_120_85_60_c3d_npy_simple_1001',
      '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'),
-    ('/absolute/datasets/UCSDped1_motion_pyramid_80_60_c3d_npy_simple_100',
-     'abc'),
+    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_80_60_c3d_npy_simple_120',
+     '/absolute/datasets/UCSDped2_split_list/10_fold_001/v00_train.txt'),
     'ID')[1]
 
 # Basic model parameters as external flags.
 timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
 tags = tf.flags
 # Net config
-tags.DEFINE_integer('batch_size', 128, 'batch size.')
+tags.DEFINE_integer('batch_size', 64, 'batch size.')
 tags.DEFINE_integer('epoch_num', 900, 'epoch number.')
 tags.DEFINE_float('learning_rate_base', 0.001, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
@@ -30,7 +30,7 @@ tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
 tags.DEFINE_string('npy_file_path', NPY_FILE_PATH, 'npy file path')
 tags.DEFINE_string('training_list', TRAINING_LIST, 'training list, corresponding to npy_file_path')
 # General
-tags.DEFINE_string('set_gpu', '3', 'Single gpu version, index select')
+tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path', osp.join('/absolute/tensorflow_models', timestamp, timestamp + '.ckpt'),
                    'where to store tensorflow models')
 # lasting
@@ -40,7 +40,7 @@ tags.DEFINE_integer('saving_interval', 20, 'every ? epochs to save')
 F = tags.FLAGS
 
 SAVE_FILE_PATH = F.save_file_path
-JSON_FILE_PATH = osp.join(basepy.check_or_create_path(osp.dirname(SAVE_FILE_PATH), show=True), 'anoma_v08_keys.json')
+JSON_FILE_PATH = osp.join(basepy.check_or_create_path(osp.dirname(SAVE_FILE_PATH), show=True), 'keys.json')
 D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              batch_size=F.batch_size,
                                                              epoch_num=F.epoch_num,

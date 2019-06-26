@@ -82,7 +82,7 @@ def devide_long_video_folder(json_file='./temp/video_info.json'):
 def video_name_length_ratio(video_dataset='/absolute/datasets/anoma', frame_suffix='.tif'):
     dataset_info = []
     video_path_list = basepy.get_2tier_folder_path_list(video_dataset)
-    video_path_list = [i for i in video_path_list if len(osp.basename(i)) == 7 or len(osp.basename(i)) == 8]
+    video_path_list = [i for i in video_path_list if osp.isdir(i)]
     for one_video_path in video_path_list:
         video_frame = basepy.get_1tier_file_path_list(one_video_path, suffix=frame_suffix)
         video_frame = sorted(video_frame, key=lambda x: int(osp.basename(x).split('.')[0]))
@@ -92,8 +92,6 @@ def video_name_length_ratio(video_dataset='/absolute/datasets/anoma', frame_suff
                              int(osp.basename(video_frame[-1]).split('.')[0]),
                              cv2.imread(video_frame[0]).shape])
     return dataset_info
-    
-
 
 
 def find_empty_motion_video(tfrecs_path=CLIPS_TFRECS_PATH):

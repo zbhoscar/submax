@@ -9,7 +9,8 @@ import time
 
 # TRACK_WINDOW: cv2 format: c, r, w, h                    # -> start, -v start, -> length, -v length
 # AREA_CROPS: numpy format: shape = (240, 320, 3)         # (h, w, channel)
-# 0, (h + edge) / 2, (h - edge) / 2, h , 0, (w + edge) / 2, (w - edge) / 2 , w
+# areas = 0, (h + edge) / 2, (h - edge) / 2, h , 0, (w + edge) / 2, (w - edge) / 2 , w
+# areas = [int(i) for i in areas]
 DATASET_PATH, FRAME_SUFFIX, TRACK_WINDOW, AREA_CROPS, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE = (
     ('/absolute/datasets/anoma', '.jpg', (70, 50, 50, 50),
      ((0, 150, 0, 190), (0, 150, 130, 320), (90, 240, 0, 190), (90, 240, 130, 320)),
@@ -23,8 +24,8 @@ DATASET_PATH, FRAME_SUFFIX, TRACK_WINDOW, AREA_CROPS, CLIP_LEN, STEP, OPTICAL, C
     ('/absolute/datasets/UCSDped1', '.tif', (40, 20, 80, 80),
      ((0, 119, 0, 159), (0, 119, 79, 238), (39, 158, 0, 159), (39, 158, 79, 238)),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'standard_80'),
-    ('/absolute/datasets/UCSDped1', '.tif', (40, 20, 80, 80),
-     ((0, 119, 0, 159), (0, 119, 79, 238), (39, 158, 0, 159), (39, 158, 79, 238)),
+    ('/absolute/datasets/UCSDped2_reform', '.tif', (70, 40, 80, 80),
+     ((0, 160, 0, 220), (0, 160, 140, 360), (80, 240, 0, 220), (80, 240, 140, 360)),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_80_60'))[4]
 
 # CLIPS_JSON_PATH = CLIPS_JSON_PATH.replace('datasets', 'ext3t')

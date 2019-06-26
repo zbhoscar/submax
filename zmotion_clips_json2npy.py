@@ -34,11 +34,11 @@ import multiprocessing as mp
 JSON_FILE_LIST, REDUCE_METHOD, REDUCE_NUM, DATASET_PATH = (
     ('/absolute/datasets/anoma_motion_pyramid_120_85_60_all_json', 'simple', 1001, '/absolute/datasets/anoma'),
     ('/absolute/datasets/UCFCrime2Local_motion_all_json', 'crime2local', 1001, '/absolute/datasets/anoma'),
-    ('/absolute/datasets/UCSDped1_motion_pyramid_80_60_all_json', 'simple', 100, '/absolute/datasets/UCSDped1'),
+    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_80_60_all_json', 'simple', 120, '/absolute/datasets/UCSDped2_reform'),
     'TYPE')[2]
 EVAL_RESULT_FOLDER = JSON_FILE_LIST.replace('all_json', 'c3d_npy_%s_%d' % (REDUCE_METHOD, REDUCE_NUM))
 
-SET_GPU = [(0, 2), (1, 0), (2, 0), (3, 0)]
+SET_GPU = [(0, 1), (1, 0), (2, 0), (3, 0)]
 SPLIT_NUM, GPU_LIST, BATCH_SIZE = sum([i[1] for i in SET_GPU]), [], 1  # BATCH_SIZE: MUST be 1 to FIT pyramid
 for gpu_id, num in SET_GPU:
     GPU_LIST.extend([str(gpu_id)] * num)
@@ -194,9 +194,9 @@ def multi_json_clip_to_np(json_clips, dataset_path=None, clip_len=16, visualizat
 
 
 def suffix_in_dataset_path(dataset_path):
-    if 'anoma' in dataset_path:
+    if 'anoma' in dataset_path.lower():
         return '.jpg'
-    elif 'ped' in dataset_path:
+    elif 'ped' in dataset_path.lower():
         return '.tif'
     else:
         raise ValueError('Undefined suffix in %s' % dataset_path)
