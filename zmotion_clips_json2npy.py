@@ -34,7 +34,8 @@ import multiprocessing as mp
 JSON_FILE_LIST, REDUCE_METHOD, REDUCE_NUM, DATASET_PATH = (
     ('/absolute/datasets/anoma_motion_pyramid_120_85_60_all_json', 'simple', 1001, '/absolute/datasets/anoma'),
     ('/absolute/datasets/UCFCrime2Local_motion_all_json', 'crime2local', 1001, '/absolute/datasets/anoma'),
-    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_80_60_all_json', 'simple', 120, '/absolute/datasets/UCSDped2_reform'),
+    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_80_60_all_json', 'simple', 120,
+     '/absolute/datasets/UCSDped2_reform'),
     'TYPE')[2]
 EVAL_RESULT_FOLDER = JSON_FILE_LIST.replace('all_json', 'c3d_npy_%s_%d' % (REDUCE_METHOD, REDUCE_NUM))
 
@@ -185,7 +186,7 @@ def get_merge_list(json_path_list, reduce_method='simple', clip_len=16, reduce_n
     return output
 
 
-def multi_json_clip_to_np(json_clips, dataset_path=None, clip_len=16, visualization=False):
+def multi_json_clip_to_np(json_clips, dataset_path=None, clip_len=16, visualization='none'):
     return np.concatenate([one_json_clip_to_np(json_clip,
                                                dataset_path=dataset_path,
                                                clip_len=clip_len,
@@ -202,16 +203,31 @@ def suffix_in_dataset_path(dataset_path):
         raise ValueError('Undefined suffix in %s' % dataset_path)
 
 
-def one_json_clip_to_np(json_clip, dataset_path=None, clip_len=16, visualization=False):
+def json_clip_analysis(json_clip):
+    class_name, video_name, index, nj = json_clip[:4]
+    area_and_valus, get_areas_done = json_clip[4:], False
+    split_stamp = int(len(area_and_valus) / 4)
+    while not get_areas_done:
+        temp_area = area_and_valus[:split_stamp * 4]
+        if False not in [i == int(i) for i in temp_area]:
+            clips_area = [int(j) for j in area_and_valus[:split_stamp * 4]]
+            values = area_and_valus[split_stamp * 4:]
+            get_areas_done = True
+        else:
+            split_stamp = split_stamp - 1
+
+    return class_name, video_name, int(index), int(nj), clips_area, values
+
+
+def one_json_clip_to_np(json_clip, dataset_path=None, clip_len=16, visualization='none'):
     frame_suffix = suffix_in_dataset_path(dataset_path)
     out_put = []
     # for class_name, video_name, index, nj, c, r, w, h, mean_motion in json_clips:
-    class_name, video_name, index, nj = json_clip[:4]
+    class_name, video_name, index, nj, clips_area, values = json_clip_analysis(json_clip)
     original_video_path = osp.join(dataset_path, class_name, video_name)
     frames_path = basepy.get_1tier_file_path_list(original_video_path, suffix=frame_suffix)
     frame_list = sorted(frames_path, key=lambda x: int(osp.basename(x).split('.')[0]))
 
-    clips_area = json_clip[4:-1]
     if len(clips_area) % 4 != 0:
         raise ValueError('Wrong json clip: ', json_clip)
     else:
@@ -219,7 +235,7 @@ def one_json_clip_to_np(json_clip, dataset_path=None, clip_len=16, visualization
         clips_area = [[i, clips_area[j + 1], clips_area[j + 2], clips_area[j + 3]]
                       for j, i in enumerate(clips_area) if j % 4 == 0]
 
-    if visualization:  # if True, dataset_path MUST a copy of original dataset_path
+    if visualization == 'pre':  # if True, dataset_path MUST a copy of original dataset_path
         for i in range(clip_len):
             image_path = frame_list[index + i]
             image_data = cv2.imread(image_path)
@@ -227,13 +243,23 @@ def one_json_clip_to_np(json_clip, dataset_path=None, clip_len=16, visualization
                 image_data = cv2.rectangle(image_data, (c, r), (c + w, r + h), int(255 / (j + 1)), 2)
             cv2.imwrite(image_path, image_data)
         return None
-    else:
+    elif visualization == 'post':
+        post_prob = values[-1]
+        for i in range(clip_len):
+            image_path = frame_list[index + i]
+            image_data = cv2.imread(image_path)
+            for j, [c, r, w, h] in enumerate(clips_area):
+                image_data = cv2.rectangle(image_data, (c, r), (c + w, r + h), (0, int(255 * post_prob), 0,), 2)
+            cv2.imwrite(image_path, image_data)
+    elif visualization == 'none':
         for c, r, w, h in clips_area:
             one = [cv2.resize(cv2.imread(frame_list[index + i])[r:r + h, c:c + w],
                               (112, 112))
                    for i in range(clip_len)]
             out_put.append(one)
         return np.array(out_put, dtype='float32')
+    else:
+        raise ValueError('Wrong type of visualization: %s .' % visualization)
 
 
 def main(_):
@@ -253,7 +279,8 @@ def main(_):
 def json_visualization(class_at_video='RoadAccidents@RoadAccidents043_x264',
                        dataset_path=DATASET_PATH,
                        json_clip_path=JSON_FILE_LIST,
-                       visualization_path='./temp/test_visualization'):
+                       visualization_path='./temp/test_visualization',
+                       visualization='post'):
     import shutil
 
     class_name, video_name = class_at_video.split('@')
@@ -264,7 +291,19 @@ def json_visualization(class_at_video='RoadAccidents@RoadAccidents043_x264',
     json_file_path = osp.join(json_clip_path, class_at_video + '.json')
     clips_list_in_one = get_merge_list([json_file_path], reduce_method=REDUCE_METHOD, reduce_num=REDUCE_NUM)
     for one_clip in clips_list_in_one:
-        _ = one_json_clip_to_np(one_clip, visualization_path, clip_len=8, visualization=True)
+        _ = one_json_clip_to_np(one_clip, visualization_path, clip_len=8, visualization=visualization)
+
+
+def patch_visualization(json_folder='/absolute/tensorflow_models/190624093140/190624093140.ckpt-51_ped_json',
+                        dataset_path='/absolute/datasets/UCSDped2_reform',
+                        json_clip_path='/absolute/tensorflow_models/190624093140/190624093140.ckpt-51_ped_json',
+                        visualization_path='/absolute/tensorflow_models/190624093140/190624093140.ckpt-51_ped_json',
+                        visualization='post'):
+    # class_at_video_list = ['RoadAccidents@RoadAccidents043_x264', 'RoadAccidents@RoadAccidents043_x264']
+    json_list = [i[:-5] for i in os.listdir(json_folder) if i.endswith('.json')]
+    for i in json_list:
+        _ = json_visualization(i, dataset_path=dataset_path, json_clip_path=json_clip_path,
+                               visualization_path=visualization_path, visualization=visualization)
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@ import os
 import tensorflow as tf
 import numpy as np
 import time
+import json
 
 import data_io.basepy as basepy
 import zc3d_npy_base as base
@@ -10,11 +11,11 @@ import zdefault_dict
 
 TEST_LIST = ('/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
              '/home/zbh/Desktop/absolute/datasets/UCFCrime2Local/Test_split_AD.txt',
-             '/absolute/datasets/UCSDped2_split_list/10_fold_001/v00_test.txt')[2]
+             '/absolute/datasets/UCSDped2_split_list/10_fold_001/v00_test.txt')[0]
 # Basic model parameters as external flags.
 tags = tf.flags
 F = tags.FLAGS
-tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190624093140',
+tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190601162431/190601162431.ckpt-7847',
                    'where to restore.')
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_integer('batch_size', 1, 'batch size.')
@@ -58,7 +59,7 @@ def main(_):
 
 
 def eval_one_ckpt(test_keys, label_keys, feature_dict, d, ckpt_file=None,
-                  if_print=True, if_draw=True, sample_num=1000, write_to=None):
+                  if_print=True, if_draw=True, sample_num=1000, npy_folder_suffix='_anoma_json'):
     with tf.name_scope('input'):
         input_test = tf.placeholder(tf.float32, [d['batch_size'], d['segment_num'], d['feature_len']], name='anom')
 
@@ -94,10 +95,12 @@ def eval_one_ckpt(test_keys, label_keys, feature_dict, d, ckpt_file=None,
                 # in form of LIST:
                 label_test.append(np.max(s))
                 # make probability .npy
-                if write_to:
-                    ins_results = np.hstack((s[:, :len(info_in[0])].T, info_in[0]))
-                    np.save(basepy.check_or_create_path(osp.join(osp.dirname(ckpt_file), write_to)),
-                            ins_results)
+                if npy_folder_suffix:
+                    eval_npy_path = basepy.check_or_create_path(ckpt_file + npy_folder_suffix)
+                    ins_results = np.hstack((info_in[0], s[:, :len(info_in[0])].T))
+                    list_results = [i.split('@') + clip for clip in ins_results.tolist()]
+                    with open(osp.join(eval_npy_path, i + '.json'), 'w') as f:
+                        json.dump(list_results, f)
 
                 step += 1
         except ValueError:
@@ -115,9 +118,6 @@ def eval_one_ckpt(test_keys, label_keys, feature_dict, d, ckpt_file=None,
         print(precision_list)
 
     return t, f, auc, auc_, precision_list
-
-
-# def eval_visualization():
 
 
 if __name__ == '__main__':
