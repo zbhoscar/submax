@@ -31,15 +31,13 @@ import cv2
 import data_io.basepy as basepy
 import multiprocessing as mp
 
-JSON_FILE_LIST, REDUCE_METHOD, REDUCE_NUM, DATASET_PATH = (
-    ('/absolute/datasets/anoma_motion_pyramid_120_85_60_all_json', 'simple', 1001, '/absolute/datasets/anoma'),
-    ('/absolute/datasets/UCFCrime2Local_motion_all_json', 'crime2local', 1001, '/absolute/datasets/anoma'),
-    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_80_60_all_json', 'simple', 120,
-     '/absolute/datasets/UCSDped2_reform'),
-    'TYPE')[2]
-EVAL_RESULT_FOLDER = JSON_FILE_LIST.replace('all_json', 'c3d_npy_%s_%d' % (REDUCE_METHOD, REDUCE_NUM))
+JSON_FILE_LIST, DATASET_PATH = (
+    ('/absolute/datasets/anoma_motion_pyramid_120_85_60_all_json', '/absolute/datasets/anoma'),
+    'TYPE')[0]
 
-SET_GPU = [(0, 1), (1, 0), (2, 0), (3, 0)]
+EVAL_RESULT_FOLDER = JSON_FILE_LIST.replace('all_json', 'c3d_npy')
+
+SET_GPU = [(0, 2), (1, 1), (2, 2), (3, 6)]
 SPLIT_NUM, GPU_LIST, BATCH_SIZE = sum([i[1] for i in SET_GPU]), [], 1  # BATCH_SIZE: MUST be 1 to FIT pyramid
 for gpu_id, num in SET_GPU:
     GPU_LIST.extend([str(gpu_id)] * num)
@@ -61,7 +59,7 @@ def _variable_with_weight_decay(name, shape, stddev, wd):
 
 
 def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_size=1, set_gpu='0'):
-    clips_list_in_one = get_merge_list(json_path_list, reduce_method=REDUCE_METHOD, reduce_num=REDUCE_NUM)
+    clips_list_in_one = get_merge_list(json_path_list)
     # MAKE SURE NPY WRITING WORK
     clips_list_in_one = clips_list_in_one + clips_list_in_one[:batch_size]
 
@@ -143,6 +141,7 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
                     if class_video_name != dict_key and dict_key is None:
                         dict_value = np.expand_dims(np_as_line, axis=0)
                         dict_key = class_video_name
+                        print('calculating %s...' % dict_key)
                     elif class_video_name == dict_key:
                         dict_value = np.concatenate((dict_value, np.expand_dims(np_as_line, axis=0)))
                     elif class_video_name != dict_key and dict_key is not None:
@@ -152,6 +151,7 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
                         del dict_value, dict_key
                         dict_value = np.expand_dims(np_as_line, axis=0)
                         dict_key = class_video_name
+                        print('calculating %s...' % dict_key)
                     else:
                         raise stop_try
 
@@ -166,23 +166,31 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
             print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
-def get_merge_list(json_path_list, reduce_method='simple', clip_len=16, reduce_num=1001):
+def get_merge_list(json_path_list, frame_select=16):
     output = []
     for json_path in json_path_list:
-        # eg. json_path: '/absolute/datasets/anoma_motion_all_json_type_1/normal_train@Normal_Videos308_3_x264.json'
+        # eg. json_path = '/absolute/datasets/anoma_motion_all_json_type_1/normal_train@Normal_Videos308_3_x264.json'
         # get original list form json:
+
         with open(json_path, 'r') as f:
             clips_info = json.load(f)
-        # how to reduce clip json
-        if reduce_method == 'simple':
-            clips_info = [
-                i for i in clips_info if i[2] % clip_len == 0] if len(clips_info) > reduce_num * 3 else clips_info
-            clips_info = sorted(clips_info, key=lambda x: x[-1], reverse=True)[:reduce_num]
-        elif reduce_method == 'crime2local':
-            clips_info = [i for i in clips_info if i[2] % 8 == 0]
+        if frame_select: # frame_select=16
+            clips_info_to_add = []
+            for i in clips_info:
+                if i[2] % frame_select == 0:
+                    clips_info_to_add.append(i)
         else:
-            raise ValueError('Wrong reduce method: %s' % reduce_method)
-        output.extend(clips_info)
+            clips_info_to_add = clips_info
+
+        # class_name, video_name = osp.basename(json_path)[:-5].split('@')
+        #
+        # video_path = osp.join(DATASET_PATH, class_name, video_name)
+        # frame_list = basepy.get_1tier_file_path_list(video_path, suffix='.jpg')
+        # frame_list = sorted(frame_list, key=lambda x: int(osp.basename(x).split('.')[0]))
+
+        # if frame_list
+
+        output.extend(clips_info_to_add)
     return output
 
 
@@ -268,7 +276,7 @@ def main(_):
         basepy.get_1tier_file_path_list(basepy.check_or_create_path(EVAL_RESULT_FOLDER), suffix='.npy'),
         divide_num=SPLIT_NUM, if_print=True)
 
-    # run_test(remaining_list, DATASET_PATH, EVAL_RESULT_FOLDER, BATCH_SIZE, '3')
+    # run_test(remaining_list, DATASET_PATH, EVAL_RESULT_FOLDER, BATCH_SIZE, GPU_LIST[0])
     p = mp.Pool(SPLIT_NUM)
     for j, em in enumerate(split_list):
         p.apply_async(run_test, args=(em, DATASET_PATH, EVAL_RESULT_FOLDER, BATCH_SIZE, GPU_LIST[j]))
@@ -289,7 +297,7 @@ def json_visualization(class_at_video='RoadAccidents@RoadAccidents043_x264',
     shutil.copytree(orig_path, visual_path)
 
     json_file_path = osp.join(json_clip_path, class_at_video + '.json')
-    clips_list_in_one = get_merge_list([json_file_path], reduce_method=REDUCE_METHOD, reduce_num=REDUCE_NUM)
+    clips_list_in_one = get_merge_list([json_file_path])
     for one_clip in clips_list_in_one:
         _ = one_json_clip_to_np(one_clip, visualization_path, clip_len=8, visualization=visualization)
 

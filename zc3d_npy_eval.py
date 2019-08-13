@@ -15,9 +15,9 @@ TEST_LIST = ('/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Anno
 # Basic model parameters as external flags.
 tags = tf.flags
 F = tags.FLAGS
-tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190601162431/190601162431.ckpt-7847',
+tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190601162431',
                    'where to restore.')
-tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
+tags.DEFINE_string('set_gpu', '2', 'Single gpu version, index select')
 tags.DEFINE_integer('batch_size', 1, 'batch size.')
 tags.DEFINE_string('testing_list', TEST_LIST, 'test samples from the list')
 
