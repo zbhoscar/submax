@@ -13,8 +13,8 @@ import zdefault_dict
 NPY_FILE_PATH, TRAINING_LIST = (
     ('/absolute/datasets/anoma_motion_pyramid_120_85_60_c3d_npy_simple_1001',
      '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'),
-    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_80_60_c3d_npy_simple_120',
-     '/absolute/datasets/UCSDped2_split_list/10_fold_001/v00_train.txt'),
+    ('/absolute/datasets/UCSDped2_reform_motion_original_c3d_npy_simple_120',
+     '/absolute/datasets/UCSDped2_split_list/10_fold_001/v01_train.txt'),
     'ID')[1]
 
 # Basic model parameters as external flags.
@@ -48,6 +48,7 @@ D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              moving_average_decay=F.moving_average_decay,
                                                              regularization_scale=F.regularization_scale,
                                                              npy_file_path=F.npy_file_path,
+                                                             segment_num=int(F.npy_file_path.split('_')[-1]),
                                                              set_gpu=F.set_gpu,
                                                              lambda1=0.00008,
                                                              lambda2=0.00008,
@@ -164,6 +165,7 @@ def main(_):
                     normal_in[j] = base.reform_np_array(feature_dict[i], reform=D['segment_num'])
 
                 time2 = time.time()
+                print(anomaly_in.shape)
                 l, _, a, c, d = sess.run([loss, train_op, mean_mil, l2, regu],
                                          feed_dict={input_anom: anomaly_in, input_norm: normal_in})
                 if step in step2show:

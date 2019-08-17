@@ -31,13 +31,13 @@ import cv2
 import data_io.basepy as basepy
 import multiprocessing as mp
 
+
 JSON_FILE_LIST, REDUCE_METHOD, REDUCE_NUM, DATASET_PATH = (
-    ('/absolute/datasets/anoma_motion_pyramid_120_85_60_all_json', 'simple', 1001, '/absolute/datasets/anoma'),
-    ('/absolute/datasets/anoma_motion_pyramid_120_85_60_all_json', 'test', -1, '/absolute/datasets/anoma'),
-    ('/absolute/datasets/UCFCrime2Local_motion_all_json', 'crime2local', 1001, '/absolute/datasets/anoma'),
-    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_80_60_all_json', 'simple', 120,
+    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_60_42_all_json', 'simple', 120,
      '/absolute/datasets/UCSDped2_reform'),
-    'TYPE')[0]
+    ('/absolute/datasets/UCSDped2_reform_motion_original_all_json', 'simple', 120,
+     '/absolute/datasets/UCSDped2_reform'),
+    'TYPE')[1]
 EVAL_RESULT_FOLDER = JSON_FILE_LIST.replace('all_json', 'c3d_npy_%s_%d' % (REDUCE_METHOD, REDUCE_NUM))
 
 SET_GPU = [(0, 1), (1, 0), (2, 0), (3, 0)]

@@ -11,13 +11,13 @@ import zdefault_dict
 
 TEST_LIST = ('/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
              '/home/zbh/Desktop/absolute/datasets/UCFCrime2Local/Test_split_AD.txt',
-             '/absolute/datasets/UCSDped2_split_list/10_fold_001/v00_test.txt')[0]
+             '/absolute/datasets/UCSDped2_split_list/10_fold_001/v01_test.txt')[2]
 # Basic model parameters as external flags.
 tags = tf.flags
 F = tags.FLAGS
-tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190601162431',
+tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190813231653',
                    'where to restore.')
-tags.DEFINE_string('set_gpu', '2', 'Single gpu version, index select')
+tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_integer('batch_size', 1, 'batch size.')
 tags.DEFINE_string('testing_list', TEST_LIST, 'test samples from the list')
 
@@ -106,18 +106,18 @@ def eval_one_ckpt(test_keys, label_keys, feature_dict, d, ckpt_file=None,
         except ValueError:
             print("Test done, at %s" % time.asctime(time.localtime(time.time())))
 
-    t, f, auc, auc_, precision_list = basepy.TPR_FPR(label_test, label_keys, bool_draw=if_draw, sample_num=sample_num)
-    if if_print:
-        print('%s evaluate results:' % ckpt_file)
-        print('auc: %5f, auc_: %5f, max precision: %5f,' % (auc, auc_, max(precision_list)))
-        print('TPR_points:')
-        print(t)
-        print('FPR_points:')
-        print(f)
-        print('corresponding precision:')
-        print(precision_list)
-
-    return t, f, auc, auc_, precision_list
+    # t, f, auc, auc_, precision_list = basepy.TPR_FPR(label_test, label_keys, bool_draw=if_draw, sample_num=sample_num)
+    # if if_print:
+    #     print('%s evaluate results:' % ckpt_file)
+    #     print('auc: %5f, auc_: %5f, max precision: %5f,' % (auc, auc_, max(precision_list)))
+    #     print('TPR_points:')
+    #     print(t)
+    #     print('FPR_points:')
+    #     print(f)
+    #     print('corresponding precision:')
+    #     print(precision_list)
+    #
+    # return t, f, auc, auc_, precision_list
 
 
 if __name__ == '__main__':
