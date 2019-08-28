@@ -13,9 +13,11 @@ import time
 # areas = [int(i) for i in areas]
 DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE = (
     ('/absolute/datasets/anoma', '.jpg', (240, 320),
-     16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
+     16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
     ('/absolute/datasets/anoma', '.jpg', (240, 320),
-     16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
+     16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_80_56'),
+    ('/absolute/datasets/anoma', '.jpg', (240, 320),
+     16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
@@ -23,13 +25,13 @@ DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE 
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', None, None, 16, 16, 2, None, 'original'),
-)[3]
+)[2]
 
 EDGE, (H, W) = int(TYPE.split('_')[1]), FRAME_SIZE
-AREA_CROPS = ((0, (H + EDGE) / 2, 0, (W + EDGE) / 2),
-              (0, (H + EDGE) / 2, (W - EDGE) / 2 , W),
-              ((H - EDGE) / 2, H, 0, (W + EDGE) / 2),
-              ((H - EDGE) / 2, H, (W - EDGE) / 2 , W))
+AREA_CROPS = ((0, int((H + EDGE) / 2), 0, int((W + EDGE) / 2)),
+              (0, int((H + EDGE) / 2), int((W - EDGE) / 2) , W),
+              (int((H - EDGE) / 2), H, 0, int((W + EDGE) / 2)),
+              (int((H - EDGE) / 2), H, int((W - EDGE) / 2) , W))
 TRACK_WINDOW = (int(((W + EDGE) / 2 - EDGE) / 2), int(((H + EDGE) / 2 - EDGE) / 2), EDGE, EDGE)
 # CLIPS_JSON_PATH = CLIPS_JSON_PATH.replace('datasets', 'ext3t')
 CLIPS_JSON_PATH = DATASET_PATH + '_motion_%s_all_json' % TYPE
