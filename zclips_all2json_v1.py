@@ -18,7 +18,7 @@ DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE 
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (70, 40, 120, 120),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
-    ('/absolute/datasets/UCSDped2_reform', '.tif', (70, 40, 80, 80),
+    ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_80_56'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (75, 45, 60, 60),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
@@ -30,7 +30,7 @@ AREA_CROPS = ((0, (H + EDGE) / 2, 0, (W + EDGE) / 2),
               (0, (H + EDGE) / 2, (W - EDGE) / 2 , W),
               ((H - EDGE) / 2, H, 0, (W + EDGE) / 2),
               ((H - EDGE) / 2, H, (W - EDGE) / 2 , W))
-TRACK_WINDOW =
+TRACK_WINDOW = (int(((W + EDGE) / 2 - EDGE) / 2), int(((H + EDGE) / 2 - EDGE) / 2), EDGE, EDGE)
 # CLIPS_JSON_PATH = CLIPS_JSON_PATH.replace('datasets', 'ext3t')
 CLIPS_JSON_PATH = DATASET_PATH + '_motion_%s_all_json' % TYPE
 
