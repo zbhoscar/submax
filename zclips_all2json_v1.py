@@ -26,6 +26,8 @@ DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE 
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', None, None, 16, 16, 2, None, 'original'),
 )[2]
+# FOR TEST IN BASELINE
+# TYPE = 'original'
 
 EDGE, (H, W) = int(TYPE.split('_')[1]), FRAME_SIZE
 AREA_CROPS = ((0, int((H + EDGE) / 2), 0, int((W + EDGE) / 2)),
