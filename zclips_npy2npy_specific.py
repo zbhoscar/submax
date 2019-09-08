@@ -31,13 +31,9 @@ import cv2
 import data_io.basepy as basepy
 import multiprocessing as mp
 
-NPY_FILE_LIST, MULTISCALE, MULTIREGION = (
-    ('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy', 'single', 1),
-    ('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy', 'single', 4),
-    ('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy', 'pyramid', 1),
-    ('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy', 'pyramid', 4),
-    ('/absolute/datasets/anoma_motion_original_c3d_npy', None, None),
-    'TYPE')[0]
+NPY_FILE_LIST = ('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy',
+                 '/absolute/datasets/anoma_motion_original_c3d_npy')[0]
+MULTISCALE, MULTIREGION = (('single', 1), ('single', 4), ('pyramid', 1), ('pyramid', 4), (None, None))[0]
 try:
     EVAL_RESULT_FOLDER = NPY_FILE_LIST.replace('_motion_', '_motion_4training_') \
         .replace('_pyramid_', '_%s_' % MULTISCALE) \
