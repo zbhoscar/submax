@@ -11,11 +11,11 @@ import zc3d_npy_base as base
 import zdefault_dict
 
 NPY_FILE_PATH, TRAINING_LIST = (
-    ('/absolute/datasets/anoma_motion_pyramid_120_85_60_c3d_npy_simple_1001',
+    ('/absolute/datasets/anoma_motion_4training_single_120_85_1region_c3d_npy',
      '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'),
     ('/absolute/datasets/UCSDped2_reform_motion_original_c3d_npy_simple_120',
      '/absolute/datasets/UCSDped2_split_list/10_fold_001/v01_train.txt'),
-    'ID')[1]
+    'ID')[0]
 
 # Basic model parameters as external flags.
 timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
@@ -31,7 +31,9 @@ tags.DEFINE_string('npy_file_path', NPY_FILE_PATH, 'npy file path')
 tags.DEFINE_string('training_list', TRAINING_LIST, 'training list, corresponding to npy_file_path')
 # General
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
-tags.DEFINE_string('save_file_path', osp.join('/absolute/tensorflow_models', timestamp, timestamp + '.ckpt'),
+tags.DEFINE_string('save_file_path',
+                   osp.join('/absolute/tensorflow_models', timestamp + '_' + osp.basename(NPY_FILE_PATH),
+                            timestamp + '.ckpt'),
                    'where to store tensorflow models')
 # lasting
 tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')

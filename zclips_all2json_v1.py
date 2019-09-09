@@ -18,23 +18,25 @@ DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE 
      16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_80_56'),
     ('/absolute/datasets/anoma', '.jpg', (240, 320),
      16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
+    ('/absolute/datasets/anoma', '.jpg', (240, 320), 16, 16, 2, None, 'original'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_80_56'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
-    ('/absolute/datasets/UCSDped2_reform', '.tif', None, None, 16, 16, 2, None, 'original'),
-)[2]
+    ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360), 16, 8, 2, None, 'original'),
+)[3]
 # FOR TEST IN BASELINE
 # TYPE = 'original'
-
-EDGE, (H, W) = int(TYPE.split('_')[1]), FRAME_SIZE
-AREA_CROPS = ((0, int((H + EDGE) / 2), 0, int((W + EDGE) / 2)),
-              (0, int((H + EDGE) / 2), int((W - EDGE) / 2) , W),
-              (int((H - EDGE) / 2), H, 0, int((W + EDGE) / 2)),
-              (int((H - EDGE) / 2), H, int((W - EDGE) / 2) , W))
-TRACK_WINDOW = (int(((W + EDGE) / 2 - EDGE) / 2), int(((H + EDGE) / 2 - EDGE) / 2), EDGE, EDGE)
+H, W = FRAME_SIZE
+if TYPE != 'original':
+    EDGE = int(TYPE.split('_')[1])
+    AREA_CROPS = ((0, int((H + EDGE) / 2), 0, int((W + EDGE) / 2)),
+                  (0, int((H + EDGE) / 2), int((W - EDGE) / 2) , W),
+                  (int((H - EDGE) / 2), H, 0, int((W + EDGE) / 2)),
+                  (int((H - EDGE) / 2), H, int((W - EDGE) / 2) , W))
+    TRACK_WINDOW = (int(((W + EDGE) / 2 - EDGE) / 2), int(((H + EDGE) / 2 - EDGE) / 2), EDGE, EDGE)
 # CLIPS_JSON_PATH = CLIPS_JSON_PATH.replace('datasets', 'ext3t')
 CLIPS_JSON_PATH = DATASET_PATH + '_motion_%s_all_json' % TYPE
 
@@ -91,10 +93,13 @@ def write_all_clips2json(sample_path_list, tfrecords_path):
             list4json = []
             for index in every_step_list:
                 height, width, _ = cv2.imread(frame_list[index]).shape
+                if FRAME_SIZE != (height, width):
+                    print('wrong in', class_name, video_name, index, height, width)
                 list4json.append([class_name, video_name, index, 0, 0, 0, width, height, 0])
 
         with open(tfrecord_path, 'w') as f:
             json.dump(list4json, f)
+        print('%s done.' % tfrecord_path)
         del list4json
 
 
@@ -106,6 +111,14 @@ def main():
     remaining_list, _ = basepy.get_remaining_to_multi(basepy.get_2tier_folder_path_list(DATASET_PATH),
                                                       basepy.get_1tier_file_path_list(CLIPS_JSON_PATH), if_print=True)
     random.shuffle(remaining_list)
+
+    print('FRAME_SIZE :' , FRAME_SIZE)
+    if TYPE != 'original':
+        print('EDGE :' , EDGE)
+        print('AREA_CROPS :' , AREA_CROPS)
+        print('TRACK_WINDOW :' , TRACK_WINDOW)
+    print('CLIPS_JSON_PATH :' , CLIPS_JSON_PATH)
+
     # single processing
     # write_all_clips2json(remaining_list, CLIPS_JSON_PATH)
     basepy.non_output_multiprocessing(write_all_clips2json, remaining_list, CLIPS_JSON_PATH,
