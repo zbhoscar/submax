@@ -13,8 +13,8 @@ EXPERIMENT_KEYS = {'training_list': '/absolute/datasets/Anomaly-Detection-Datase
                    'lambda1': 0.00008,
                    'lambda2': 0.00008,
                    'fusion': 'standard',
-                   'attention_l': 4096,
-                   'embedding': '_avg'
+                   # 'attention_l': 4096,
+                   # 'embedding': '_avg'
                    }
 
 

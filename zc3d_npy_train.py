@@ -16,7 +16,7 @@ NPY_FILE_PATH, TRAINING_LIST = (
     ('/absolute/datasets/UCSDped2_reform_motion_original_c3d_npy_simple_120',
      '/absolute/datasets/UCSDped2_split_list/10_fold_001/v01_train.txt'),
     'ID')[0]
-
+SEGMENT_NUM = 130
 # Basic model parameters as external flags.
 timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
 tags = tf.flags
@@ -29,6 +29,7 @@ tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
 tags.DEFINE_string('npy_file_path', NPY_FILE_PATH, 'npy file path')
 tags.DEFINE_string('training_list', TRAINING_LIST, 'training list, corresponding to npy_file_path')
+tags.DEFINE_integer('segment_num', SEGMENT_NUM, 'segment number in all.')
 # General
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path',
@@ -50,7 +51,7 @@ D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              moving_average_decay=F.moving_average_decay,
                                                              regularization_scale=F.regularization_scale,
                                                              npy_file_path=F.npy_file_path,
-                                                             segment_num=int(F.npy_file_path.split('_')[-1]),
+                                                             segment_num=F.segment_num,
                                                              set_gpu=F.set_gpu,
                                                              lambda1=0.00008,
                                                              lambda2=0.00008,
@@ -167,7 +168,7 @@ def main(_):
                     normal_in[j] = base.reform_np_array(feature_dict[i], reform=D['segment_num'])
 
                 time2 = time.time()
-                print(anomaly_in.shape)
+                # print(anomaly_in.shape)
                 l, _, a, c, d = sess.run([loss, train_op, mean_mil, l2, regu],
                                          feed_dict={input_anom: anomaly_in, input_norm: normal_in})
                 if step in step2show:
