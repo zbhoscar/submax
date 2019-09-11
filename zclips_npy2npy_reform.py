@@ -25,11 +25,15 @@ import tensorflow as tf
 import time
 import numpy as np
 
-import c3d_model
-import json
-import cv2
 import data_io.basepy as basepy
 import multiprocessing as mp
+
+tags = tf.flags
+# Net config
+tags.DEFINE_integer('var1', 0, 'choose NPY_FILE_FOLDER, SEGMENT_NUM, TEST_FILE.')
+tags.DEFINE_integer('var2', 0, 'choose MULTISCALE, MULTIREGION.')
+tags.DEFINE_boolean('multiprocessing', True, 'choose multiprocessing or not.')
+F = tags.FLAGS
 
 NPY_FILE_FOLDER, SEGMENT_NUM, TEST_FILE = (
     ('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy', 32,
@@ -39,8 +43,16 @@ NPY_FILE_FOLDER, SEGMENT_NUM, TEST_FILE = (
     ('/absolute/datasets/anoma_motion_pyramid_60_42_c3d_npy', 32,
      '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'),
     ('/absolute/datasets/anoma_motion_original_c3d_npy', 32,
-     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'))[0]
-MULTISCALE, MULTIREGION = (('single', 1), ('single', 4), ('pyramid', 1), ('pyramid', 4), (None, None))[3]
+     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'),
+    ('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy', 32,
+     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'),
+    ('/absolute/datasets/anoma_motion_pyramid_80_56_c3d_npy', 32,
+     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'),
+    ('/absolute/datasets/anoma_motion_pyramid_60_42_c3d_npy', 32,
+     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'),
+    ('/absolute/datasets/anoma_motion_original_c3d_npy', 32,
+     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'))[F.var1]
+MULTISCALE, MULTIREGION = (('single', 1), ('single', 4), ('pyramid', 1), ('pyramid', 4), (None, None))[F.var2]
 try:
     EVAL_RESULT_FOLDER = NPY_FILE_FOLDER.replace('_motion_', '_motion_4training_') \
         .replace('_pyramid_', '_%s_' % MULTISCALE) \
@@ -74,7 +86,7 @@ def npy_preprocessing(npy_file, eval_result_folder, multiscale, multiregion, seg
         npy_data = np.concatenate((np.maximum(npy_data[:, :4096], npy_data[:, 4096:8192]), npy_data[:, 8192:]), axis=1)
 
     # DIFFERENT STRATEGY IN TRAINING AND TESTING
-    if osp.basename(npy_file) in TEST_STR:
+    if osp.basename(npy_file).split('@')[1].split('.')[0] in TEST_STR:
         new_npy_data = npy_data
     else:
         if multiregion == 4:
@@ -117,11 +129,14 @@ def main(_):
 
     print('Converting %s to %s :' % (NPY_FILE_FOLDER, EVAL_RESULT_FOLDER))
     # npy_list_preprocessing(remaining_list, EVAL_RESULT_FOLDER, MULTISCALE, MULTIREGION)
-    p = mp.Pool(SPLIT_NUM)
-    for j, em in enumerate(split_list):
-        p.apply_async(npy_list_preprocessing, args=(em, EVAL_RESULT_FOLDER, MULTISCALE, MULTIREGION, SEGMENT_NUM))
-    p.close()
-    p.join()
+    if F.multiprocessing:
+        p = mp.Pool(SPLIT_NUM)
+        for j, em in enumerate(split_list):
+            p.apply_async(npy_list_preprocessing, args=(em, EVAL_RESULT_FOLDER, MULTISCALE, MULTIREGION, SEGMENT_NUM))
+        p.close()
+        p.join()
+    else:
+        npy_list_preprocessing(remaining_list, EVAL_RESULT_FOLDER, MULTISCALE, MULTIREGION, SEGMENT_NUM)
 
     # END
     print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))

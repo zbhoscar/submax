@@ -31,16 +31,25 @@ import cv2
 import data_io.basepy as basepy
 import multiprocessing as mp
 
+tags = tf.flags
+# Net config
+tags.DEFINE_integer('var1', 0, 'choose JSON_FILE_FOLDER, DATASET_PATH.')
+tags.DEFINE_integer('cpu0', 0, 'set multiple in cpu0.')
+tags.DEFINE_integer('cpu1', 0, 'set multiple in cpu1.')
+tags.DEFINE_integer('cpu2', 0, 'set multiple in cpu2.')
+tags.DEFINE_integer('cpu3', 0, 'set multiple in cpu3.')
+F = tags.FLAGS
+
 JSON_FILE_FOLDER, DATASET_PATH = (
     ('/absolute/datasets/anoma_motion_pyramid_120_85_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_pyramid_80_56_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_pyramid_60_42_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_original_all_json', '/absolute/datasets/anoma'),
-    'TYPE')[3]
+    'TYPE')[F.var1]
 
 EVAL_RESULT_FOLDER = JSON_FILE_FOLDER.replace('all_json', 'c3d_npy')
 
-SET_GPU = [(0, 8), (1, 0), (2, 1), (3, 1)]
+SET_GPU = [(0, F.cpu0), (1, F.cpu1), (2, F.cpu2), (3, F.cpu3)]
 SPLIT_NUM, GPU_LIST, BATCH_SIZE = sum([i[1] for i in SET_GPU]), [], 1  # BATCH_SIZE: MUST be 1 to FIT pyramid
 for gpu_id, num in SET_GPU:
     GPU_LIST.extend([str(gpu_id)] * num)

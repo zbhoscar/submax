@@ -6,11 +6,20 @@ import data_io.basepy as basepy
 import random
 import json
 import time
+import tensorflow as tf
 
 # TRACK_WINDOW: cv2 format: c, r, w, h                    # -> start, -v start, -> length, -v length
 # AREA_CROPS: numpy format: shape = (240, 320, 3)         # (h, w, channel)
 # areas = 0, (h + edge) / 2, (h - edge) / 2, h , 0, (w + edge) / 2, (w - edge) / 2 , w
 # areas = [int(i) for i in areas]
+
+tags = tf.flags
+# Net config
+tags.DEFINE_integer('var1', 0,
+                    'choose DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE.')
+tags.DEFINE_boolean('multiprocessing', True, 'choose multiprocessing or not.')
+F = tags.FLAGS
+
 DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE = (
     ('/absolute/datasets/anoma', '.jpg', (240, 320),
      16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
@@ -26,7 +35,7 @@ DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE 
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360), 16, 8, 2, None, 'original'),
-)[3]
+)[F.var1]
 # FOR TEST IN BASELINE
 # TYPE = 'original'
 H, W = FRAME_SIZE
@@ -103,7 +112,7 @@ def write_all_clips2json(sample_path_list, tfrecords_path):
         del list4json
 
 
-def main():
+def main(_):
     _ = basepy.check_or_create_path(CLIPS_JSON_PATH, create=True, show=True)
 
     # write tfrecords
@@ -121,11 +130,14 @@ def main():
 
     # single processing
     # write_all_clips2json(remaining_list, CLIPS_JSON_PATH)
-    basepy.non_output_multiprocessing(write_all_clips2json, remaining_list, CLIPS_JSON_PATH,
-                                      num=int(mp.cpu_count()))
+    if F.multiprocessing:
+        basepy.non_output_multiprocessing(write_all_clips2json, remaining_list, CLIPS_JSON_PATH,
+                                          num=int(mp.cpu_count()))
+    else:
+        write_all_clips2json(remaining_list, CLIPS_JSON_PATH)
 
     print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
 if __name__ == '__main__':
-    main()
+    tf.app.run()
