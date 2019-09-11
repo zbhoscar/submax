@@ -31,7 +31,7 @@ tags.DEFINE_string('npy_file_path', NPY_FILE_PATH, 'npy file path')
 tags.DEFINE_string('training_list', TRAINING_LIST, 'training list, corresponding to npy_file_path')
 tags.DEFINE_integer('segment_num', SEGMENT_NUM, 'segment number in all.')
 # General
-tags.DEFINE_string('set_gpu', '2', 'Single gpu version, index select')
+tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_string('save_file_path',
                    osp.join('/absolute/tensorflow_models', timestamp + '_' + osp.basename(NPY_FILE_PATH),
                             timestamp + '.ckpt'),

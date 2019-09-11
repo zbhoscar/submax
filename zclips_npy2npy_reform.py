@@ -31,11 +31,16 @@ import cv2
 import data_io.basepy as basepy
 import multiprocessing as mp
 
-NPY_FILE_FOLDER, SEGMENT_NUM = (('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy', 32),
-                                ('/absolute/datasets/anoma_motion_pyramid_80_56_c3d_npy', 32),
-                                ('/absolute/datasets/anoma_motion_pyramid_60_42_c3d_npy', 32),
-                                ('/absolute/datasets/anoma_motion_original_c3d_npy', 32))[0]
-MULTISCALE, MULTIREGION = (('single', 1), ('single', 4), ('pyramid', 1), ('pyramid', 4), (None, None))[0]
+NPY_FILE_FOLDER, SEGMENT_NUM, TEST_FILE = (
+    ('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy', 32,
+     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'),
+    ('/absolute/datasets/anoma_motion_pyramid_80_56_c3d_npy', 32,
+     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'),
+    ('/absolute/datasets/anoma_motion_pyramid_60_42_c3d_npy', 32,
+     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'),
+    ('/absolute/datasets/anoma_motion_original_c3d_npy', 32,
+     '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'))[0]
+MULTISCALE, MULTIREGION = (('single', 1), ('single', 4), ('pyramid', 1), ('pyramid', 4), (None, None))[3]
 try:
     EVAL_RESULT_FOLDER = NPY_FILE_FOLDER.replace('_motion_', '_motion_4training_') \
         .replace('_pyramid_', '_%s_' % MULTISCALE) \
@@ -43,6 +48,7 @@ try:
 except:
     EVAL_RESULT_FOLDER = NPY_FILE_FOLDER.replace('_motion_', '_motion_4training_')
 SPLIT_NUM = mp.cpu_count()
+TEST_STR = str(basepy.read_txt_lines2list(TEST_FILE, sep='  '))
 
 
 def npy_list_preprocessing(npy_file_list, eval_result_folder, multiscale, multiregion, segment_num):
@@ -51,7 +57,7 @@ def npy_list_preprocessing(npy_file_list, eval_result_folder, multiscale, multir
 
 
 def npy_preprocessing(npy_file, eval_result_folder, multiscale, multiregion, segment_num):
-    print('converting %s ...' % npy_file)
+    print('processing %s ...' % npy_file)
     npy_data = np.load(npy_file)
     if multiregion == 1:
         line_split = [i for i in range(npy_data.shape[0]) if i % 4 == 0]
@@ -67,15 +73,23 @@ def npy_preprocessing(npy_file, eval_result_folder, multiscale, multiregion, seg
     elif multiscale == 'pyramid':
         npy_data = np.concatenate((np.maximum(npy_data[:, :4096], npy_data[:, 4096:8192]), npy_data[:, 8192:]), axis=1)
 
-    if multiregion == 4:
-        new_npy_data = np.array(
-            [merge_1region_2segment(np.array([line for line in npy_data if line[4097] == 0]), segment_num=segment_num),
-             merge_1region_2segment(np.array([line for line in npy_data if line[4097] == 1]), segment_num=segment_num),
-             merge_1region_2segment(np.array([line for line in npy_data if line[4097] == 2]), segment_num=segment_num),
-             merge_1region_2segment(np.array([line for line in npy_data if line[4097] == 3]), segment_num=segment_num)])
-        new_npy_data = new_npy_data.reshape([-1, new_npy_data.shape[-1]], order='F')
+    # DIFFERENT STRATEGY IN TRAINING AND TESTING
+    if osp.basename(npy_file) in TEST_STR:
+        new_npy_data = npy_data
     else:
-        new_npy_data = merge_1region_2segment(npy_data, segment_num=segment_num)
+        if multiregion == 4:
+            new_npy_data = np.array(
+                [merge_1region_2segment(np.array([line for line in npy_data if line[4097] == 0]),
+                                        segment_num=segment_num),
+                 merge_1region_2segment(np.array([line for line in npy_data if line[4097] == 1]),
+                                        segment_num=segment_num),
+                 merge_1region_2segment(np.array([line for line in npy_data if line[4097] == 2]),
+                                        segment_num=segment_num),
+                 merge_1region_2segment(np.array([line for line in npy_data if line[4097] == 3]),
+                                        segment_num=segment_num)])
+            new_npy_data = new_npy_data.reshape([-1, new_npy_data.shape[-1]], order='F')
+        else:
+            new_npy_data = merge_1region_2segment(npy_data, segment_num=segment_num)
 
     npy_result_file = osp.join(eval_result_folder, osp.basename(npy_file))
     np.save(npy_result_file, new_npy_data)
@@ -88,7 +102,7 @@ def merge_1region_2segment(npy_data, segment_num=32):
     npy_segment_data = []
     for j, segment in enumerate(segment_split):
         try:
-            start, end = [segment, max(segment + 1,segment_split[j + 1])]
+            start, end = [segment, max(segment + 1, segment_split[j + 1])]
         except:
             start, end = [segment, npy_data_num]
         npy_segment_data.append(np.average(npy_data[start:end], axis=0))
@@ -101,7 +115,7 @@ def main(_):
         basepy.get_1tier_file_path_list(basepy.check_or_create_path(EVAL_RESULT_FOLDER), suffix='.npy'),
         divide_num=SPLIT_NUM, if_print=True)
 
-    print('%s to %s :' % (NPY_FILE_FOLDER, EVAL_RESULT_FOLDER))
+    print('Converting %s to %s :' % (NPY_FILE_FOLDER, EVAL_RESULT_FOLDER))
     # npy_list_preprocessing(remaining_list, EVAL_RESULT_FOLDER, MULTISCALE, MULTIREGION)
     p = mp.Pool(SPLIT_NUM)
     for j, em in enumerate(split_list):
@@ -111,6 +125,17 @@ def main(_):
 
     # END
     print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
+
+
+def clear_npy_for_testing(npy_file_folder, test_str=TEST_STR):
+    # del reform folder: npy_file_folder
+    npy_list = basepy.get_1tier_file_path_list(npy_file_folder, '.npy')
+    j=0
+    for npy in npy_list:
+        if osp.basename(npy).split('@')[1].split('.')[0] in str(test_str):
+            os.remove(npy)
+            print('remove %d-th file: %s' % (j, npy))
+            j += 1
 
 
 if __name__ == '__main__':

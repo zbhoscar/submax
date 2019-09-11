@@ -31,15 +31,16 @@ import cv2
 import data_io.basepy as basepy
 import multiprocessing as mp
 
-JSON_FILE_LIST, DATASET_PATH = (
+JSON_FILE_FOLDER, DATASET_PATH = (
     ('/absolute/datasets/anoma_motion_pyramid_120_85_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_pyramid_80_56_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_pyramid_60_42_all_json', '/absolute/datasets/anoma'),
-    'TYPE')[2]
+    ('/absolute/datasets/anoma_motion_original_all_json', '/absolute/datasets/anoma'),
+    'TYPE')[3]
 
-EVAL_RESULT_FOLDER = JSON_FILE_LIST.replace('all_json', 'c3d_npy')
+EVAL_RESULT_FOLDER = JSON_FILE_FOLDER.replace('all_json', 'c3d_npy')
 
-SET_GPU = [(0, 0), (1, 0), (2, 8), (3, 8)]
+SET_GPU = [(0, 8), (1, 0), (2, 1), (3, 1)]
 SPLIT_NUM, GPU_LIST, BATCH_SIZE = sum([i[1] for i in SET_GPU]), [], 1  # BATCH_SIZE: MUST be 1 to FIT pyramid
 for gpu_id, num in SET_GPU:
     GPU_LIST.extend([str(gpu_id)] * num)
@@ -265,10 +266,11 @@ def one_json_clip_to_np(json_clip, dataset_path=None, clip_len=16, visualization
 
 def main(_):
     remaining_list, split_list = basepy.get_remaining_to_multi(
-        basepy.get_1tier_file_path_list(JSON_FILE_LIST),
+        basepy.get_1tier_file_path_list(JSON_FILE_FOLDER),
         basepy.get_1tier_file_path_list(basepy.check_or_create_path(EVAL_RESULT_FOLDER), suffix='.npy'),
         divide_num=SPLIT_NUM, if_print=True)
 
+    print('Converting %s to %s' % (JSON_FILE_FOLDER, EVAL_RESULT_FOLDER))
     # run_test(remaining_list, DATASET_PATH, EVAL_RESULT_FOLDER, BATCH_SIZE, GPU_LIST[0])
     split_list = [i for i in split_list if i !=[]]
     p = mp.Pool(split_list.__len__())
@@ -280,7 +282,7 @@ def main(_):
 
 def json_visualization(class_at_video='RoadAccidents@RoadAccidents043_x264',
                        dataset_path=DATASET_PATH,
-                       json_clip_path=JSON_FILE_LIST,
+                       json_clip_path=JSON_FILE_FOLDER,
                        visualization_path='./temp/test_visualization',
                        visualization='post'):
     import shutil

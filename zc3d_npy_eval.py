@@ -11,11 +11,11 @@ import zdefault_dict
 
 TEST_LIST = ('/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
              '/home/zbh/Desktop/absolute/datasets/UCFCrime2Local/Test_split_AD.txt',
-             '/absolute/datasets/UCSDped2_split_list/10_fold_001/v01_test.txt')[2]
+             '/absolute/datasets/UCSDped2_split_list/10_fold_001/v01_test.txt')[0]
 # Basic model parameters as external flags.
 tags = tf.flags
 F = tags.FLAGS
-tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190813231653',
+tags.DEFINE_string('save_file_path', '/absolute/tensorflow_models/190510191850',
                    'where to restore.')
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_integer('batch_size', 1, 'batch size.')
