@@ -10,13 +10,13 @@ import data_io.basetf as basetf
 import zc3d_npy_base as base
 import zdefault_dict
 
-NPY_FILE_PATH, TRAINING_LIST = (
-    ('/absolute/datasets/anoma_motion_4training_single_120_85_1region_c3d_npy',
-     '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'),
-    ('/absolute/datasets/UCSDped2_reform_motion_original_c3d_npy_simple_120',
-     '/absolute/datasets/UCSDped2_split_list/10_fold_001/v01_train.txt'),
-    'ID')[0]
-SEGMENT_NUM = 128 if '4region' in NPY_FILE_PATH else 32
+# NPY_FILE_PATH, TRAINING_LIST = (
+#     ('/absolute/datasets/anoma_motion_4training_single_120_85_1region_c3d_npy',
+#      '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'),
+#     ('/absolute/datasets/UCSDped2_reform_motion_original_c3d_npy_simple_120',
+#      '/absolute/datasets/UCSDped2_split_list/10_fold_001/v01_train.txt'),
+#     'ID')[0]
+# SEGMENT_NUM = 128 if '4region' in NPY_FILE_PATH else 32
 # Basic model parameters as external flags.
 timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
 tags = tf.flags
@@ -27,22 +27,28 @@ tags.DEFINE_float('learning_rate_base', 0.001, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
-tags.DEFINE_string('npy_file_path', NPY_FILE_PATH, 'npy file path')
-tags.DEFINE_string('training_list', TRAINING_LIST, 'training list, corresponding to npy_file_path')
-tags.DEFINE_integer('segment_num', SEGMENT_NUM, 'segment number in all.')
+tags.DEFINE_string('npy_file_path',
+                   '/absolute/datasets/anoma_motion_4training_single_120_85_1region_c3d_npy',
+                   'npy file path')
+tags.DEFINE_string('training_list',
+                   '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt',
+                   'default to UCFCrime, else specific to UCSD.')
+# tags.DEFINE_integer('segment_num', SEGMENT_NUM, 'segment number in all.')
+tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 # General
-tags.DEFINE_string('set_gpu', '2', 'Single gpu version, index select')
-tags.DEFINE_string('save_file_path',
-                   osp.join('/absolute/tensorflow_models', timestamp + '_' + osp.basename(NPY_FILE_PATH),
-                            timestamp + '.ckpt'),
-                   'where to store tensorflow models')
+# tags.DEFINE_string('save_file_path',
+#                    osp.join('/absolute/tensorflow_models', timestamp + '_' + osp.basename(NPY_FILE_PATH),
+#                             timestamp + '.ckpt'),
+#                    'where to store tensorflow models')
 # lasting
 tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')
 # every ? epochs to save
 tags.DEFINE_integer('saving_interval', 20, 'every ? epochs to save')
 F = tags.FLAGS
 
-SAVE_FILE_PATH = F.save_file_path
+SEGMENT_NUM = 128 if '4region' in F.npy_file_path else 32
+SAVE_FILE_PATH = osp.join('/absolute/tensorflow_models', timestamp + '_' + osp.basename(F.npy_file_path),
+                            timestamp + '.ckpt')
 JSON_FILE_PATH = osp.join(basepy.check_or_create_path(osp.dirname(SAVE_FILE_PATH), show=True), 'keys.json')
 D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              batch_size=F.batch_size,
@@ -51,7 +57,7 @@ D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
                                                              moving_average_decay=F.moving_average_decay,
                                                              regularization_scale=F.regularization_scale,
                                                              npy_file_path=F.npy_file_path,
-                                                             segment_num=F.segment_num,
+                                                             segment_num=SEGMENT_NUM,
                                                              set_gpu=F.set_gpu,
                                                              lambda1=0.00008,
                                                              lambda2=0.00008,
@@ -100,10 +106,6 @@ def main(_):
                                        segment_num=D['segment_num'])
 
     with tf.name_scope('loss'):
-        # batch_score = tf.convert_to_tensor([tf.reduce_max(i) for i in score_anomaly])
-        # restrict1 = tf.convert_to_tensor(
-        #     [tf.reduce_mean((score_anomaly[i][1:] - score_anomaly[i][:-1]) ** 2) for i in range(D['batch_size'])],
-        #     dtype=tf.float32)
         restrict2 = tf.convert_to_tensor(
             [tf.reduce_mean(score_anomaly[i] ** 2) for i in range(D['batch_size'])],
             dtype=tf.float32)
@@ -185,6 +187,10 @@ def main(_):
 
 
 def ones(keys, feature_dict):
+    anoma_keys, norma_keys = keys
+    anoma_in = [base.reform_np_array(feature_dict[key], reform=D['segment_num']) for key in anoma_keys]
+    norma_in = [base.reform_np_array(feature_dict[key], reform=D['segment_num']) for key in norma_keys]
+    return np.array(anoma_in), np.array(norma_in)
     # NO MULTIPROCESSING IN THIS PART
     # ext_num = min(D['batch_size'], mp.cpu_count())
     # split_list = basepy.divide_list(list(range(D['batch_size'])), ext_num)
@@ -201,10 +207,6 @@ def ones(keys, feature_dict):
     # p.join()
     # anomaly_in = np.concatenate([i.get()[0] for i in results], axis=0)
     # normal_in = np.concatenate([i.get()[1] for i in results], axis=0)
-    anoma_keys, norma_keys = keys
-    anoma_in = [base.reform_np_array(feature_dict[key], reform=D['segment_num']) for key in anoma_keys]
-    norma_in = [base.reform_np_array(feature_dict[key], reform=D['segment_num']) for key in norma_keys]
-    return np.array(anoma_in), np.array(norma_in)
 
 
 if __name__ == '__main__':
