@@ -1,6 +1,6 @@
 cd anoma_v0.8
 
-#   step1
+#   STEP1
     DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE = (
         ('/absolute/datasets/anoma', '.jpg', (240, 320),
          16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
@@ -20,7 +20,7 @@ cd anoma_v0.8
 
 python3 zclips_all2json_extract.py -multiprocessing=True -var1=0
 
-#   step2
+#   STEP2
     JSON_FILE_FOLDER, DATASET_PATH = (
         ('/absolute/datasets/anoma_motion_pyramid_120_85_all_json', '/absolute/datasets/anoma'),
         ('/absolute/datasets/anoma_motion_pyramid_80_56_all_json', '/absolute/datasets/anoma'),
@@ -30,7 +30,8 @@ python3 zclips_all2json_extract.py -multiprocessing=True -var1=0
 
 python3 zclips_json2npy_c3d.py -var1=0  -cpu0=0 -cpu1=0 -cpu2=0 -cpu3=0
 
-#   step3
+
+#   STEP3
     NPY_FILE_FOLDER, SEGMENT_NUM, TEST_FILE = (
         ('/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy', 32,
          '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'),
@@ -52,7 +53,7 @@ python3 zclips_json2npy_c3d.py -var1=0  -cpu0=0 -cpu1=0 -cpu2=0 -cpu3=0
 
 python3 zclips_npy2npy_reform.py -multiprocessing=True -var1=0 -var2=0
 
-#   step4
+#   STEP4
     tags.DEFINE_integer('batch_size', 64, 'batch size.')
     tags.DEFINE_integer('epoch_num', 900, 'epoch number.')
     tags.DEFINE_float('learning_rate_base', 0.001, 'learning rate base')
@@ -67,11 +68,12 @@ python3 zclips_npy2npy_reform.py -multiprocessing=True -var1=0 -var2=0
                        'default to UCFCrime, else specific to UCSD.')
     tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 
-python3 zc3d_npy_train.py -npy_file_path=/absolute/datasets/anoma_motion_4training_single_120_85_1region_c3d_npy -set_gpu=0
+python3 zc3d_npy_train.py -npy_file_path=/absolute/datasets/anoma_motion_4training_original_c3d_npy -set_gpu=0
                           -training_list=/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt
                           -batch_size=64 -epoch_num=900 -learning_rate_base=0.001 -moving_average_decay=0.99 -regularization_scale=0.00003 -fusion=standard
 
-#    step5
+
+#   STEP5
     tags.DEFINE_string('save_file_path',
                        '/absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy/190912162832.ckpt-1',
                        'model folder path, or model ckpt file path.')
@@ -83,4 +85,30 @@ python3 zc3d_npy_train.py -npy_file_path=/absolute/datasets/anoma_motion_4traini
 
 python3 zc3d_npy_eval.py -save_file_path=/absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy/190912162832.ckpt-1
                          -set_gpu=0 -testing_list=/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt
+
+python3 zc3d_npy_eval.py -save_file_path=/absolute/tensorflow_models/190915203428_anoma_motion_4training_original_c3d_npy
+
+
+
+#   STEP6
+    tags.DEFINE_string('results_json_path',
+                       '/absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy/190914232215.ckpt-9619_eval_json',
+                       'model folder path, or model ckpt file path:'
+                       '/absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy/190914232215.ckpt-9619_eval_json'
+                       '/absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy')
+    tags.DEFINE_string('testing_list',
+                       '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
+                       'test samples from the list, default for UCFCrime,'
+                       'default is /absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt'
+                       'else for USCD: e.g. /absolute/datasets/UCSDped2_split_list/10_fold_001/v01_test.txt')
+    tags.DEFINE_string('save_plot',
+                       './temp/test_savefig',
+                       'where to save figs, default: "./temp/test_savefig", "" for NO FIG SAVE.')
+
+python3 zresults_analysis.py -results_json_path=/absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy/190914232215.ckpt-9619_eval_json
+                             -save_plot=./temp/test_savefig
+                             -testing_list=/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt
+
+python3 zresults_analysis.py -results_json_path=/absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy -save_plot=
+
 

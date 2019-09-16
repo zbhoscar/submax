@@ -80,7 +80,7 @@ def main(_):
         except ValueError:
             print("Test done, at %s" % time.asctime(time.localtime(time.time())))
 
-    t, f, auc, auc_, precision_list = basepy.TPR_FPR(label_test, label_keys, bool_draw=True, sample_num=100)
+    t, f, auc, auc_, precision_list = basepy.TPR_FPR_calc(label_test, label_keys, bool_draw=True, sample_num=100)
     print(auc, auc_)
     print(t)
     print(f)
