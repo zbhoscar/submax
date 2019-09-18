@@ -16,7 +16,7 @@ def main(_):
     tags = tf.flags
     # Net config
     tags.DEFINE_integer('batch_size', 64, 'batch size.')
-    tags.DEFINE_integer('epoch_num', 200, 'epoch number.')
+    tags.DEFINE_integer('epoch_num', 202, 'epoch number.')
     tags.DEFINE_float('learning_rate_base', 0.0005, 'learning rate base')
     tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
     tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
@@ -31,7 +31,7 @@ def main(_):
     # lasting
     tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')
     # every ? epochs to save
-    tags.DEFINE_integer('saving_interval', 20, 'every ? epochs to save')
+    tags.DEFINE_integer('saving_interval', 5, 'every ? epochs to save')
     F = tags.FLAGS
 
     SEGMENT_NUM = int(F.npy_file_path.split('_')[-3])
@@ -55,9 +55,7 @@ def main(_):
                                                                  saving_interval=F.saving_interval,
                                                                  )
 
-    print('D values:')
-    _ = [print(i, ":", D[i]) for i in D]
-
+    _ = [print('Preparing training ...... D values:')] + [print('    ', i, ":", D[i]) for i in D]
     _ = network_train(D, SAVE_FILE_PATH)
 
 
@@ -153,12 +151,12 @@ def network_train(d, ckpt_file_path):
 
             time2 = time.time()
             # print(anomaly_in.shape)
-            l, _, a, d = sess.run([loss, train_op, mean_mil, regu],
+            loss_, _, mean_mil_, regu_ = sess.run([loss, train_op, mean_mil, regu],
                                   feed_dict={input_anom: anomaly_in, input_norm: normal_in})
             if step in step2show:
                 print('After %5d steps, loss = %.5e, mil = %.5e, regu = %.5e, '
                       'feed: %.3fsec, train: %.3fsec' %
-                      (step, l, a, d, time2 - time1, time.time() - time2))
+                      (step, loss_, mean_mil_, regu_, time2 - time1, time.time() - time2))
             if step in step2save:
                 print('Save tfrecords at step %5d / %4d epochs.'
                       % (step, d['saving_interval'] * step2save.index(step)))
@@ -170,7 +168,7 @@ def network_train(d, ckpt_file_path):
     return osp.dirname(ckpt_file_path)
 
 
-def ones(keys, feature_dict):
+def ones(keys, feature_dict, D):
     anoma_keys, norma_keys = keys
     anoma_in = [base.reform_np_array(feature_dict[key], reform=D['segment_num']) for key in anoma_keys]
     norma_in = [base.reform_np_array(feature_dict[key], reform=D['segment_num']) for key in norma_keys]

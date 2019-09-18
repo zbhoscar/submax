@@ -16,7 +16,7 @@ import zresults_analysis as analysis
 
 tags = tf.flags
 F = tags.FLAGS
-# step 3 NET CONFIG
+# step 3 DATA REFORM
 tags.DEFINE_string('npy_file_path',
                    '/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy',
                    'npy file folder to be reformed.')
@@ -28,7 +28,7 @@ tags.DEFINE_integer('var0', 0, 'choose NPY_FILE_FOLDER, SEGMENT_NUM.')
 tags.DEFINE_integer('var1', 0, 'choose MULTISCALE, MULTIREGION.')
 
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
-# step 4
+# step 4 TRAINING
 tags.DEFINE_integer('batch_size', 64, 'batch size.')
 tags.DEFINE_integer('epoch_num', 200, 'epoch number.')
 tags.DEFINE_float('learning_rate_base', 0.0005, 'learning rate base')
@@ -40,8 +40,7 @@ tags.DEFINE_integer('saving_interval', 5, 'every ? epochs to save')
 # step 5 FOR EVALUATION
 # '' or /absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy
 tags.DEFINE_string('ckpt_path_to_eval', '', ' "" for brand new, or model folder path, or model ckpt file path.')
-
-# step 6
+# step 6 FOR ANALYSIS
 tags.DEFINE_string('results_json_path',
                    '/absolute/tensorflow_models/190915203423_anoma_motion_4training_original_c3d_npy',
                    'model folder path, or model ckpt file path:'
@@ -51,14 +50,14 @@ tags.DEFINE_string('results_json_path',
 
 def main(_):
     if not F.ckpt_path_to_eval:
-        # step3
+        # step 3
         reform_type, reform_num = (('maxtop', 1000), ('segment', 32))[F.var0]
         multiscale, multiregion = (('pyramid', 4), ('pyramid', 1), ('single', 4), ('single', 1), (None, None))[F.var1]
 
         npy_reformed_file_path = reform.npy_reform(F.npy_file_path,
                                                    multiscale, multiregion, reform_type, reform_num,
                                                    F.multiprocessing, F.testing_list)
-        # step4
+        # step 4
         timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
         ckpt_file_path = osp.join('/absolute/tensorflow_models', timestamp + '_' + osp.basename(npy_reformed_file_path),
                                   timestamp + '.ckpt')
@@ -78,14 +77,14 @@ def main(_):
                                                                      lasting=F.lasting,
                                                                      testing_list=F.testing_list,
                                                                      saving_interval=F.saving_interval)
-        _ = [print('Preparing training ...... D values:')] + [print(i, ":", d[i]) for i in d]
+        _ = [print('Preparing training ...... D values:')] + [print('    ', i, ":", d[i]) for i in d]
         tf_model_path = train.network_train(d, ckpt_file_path)
     else:
         tf_model_path = 'DIRECT TO STEP5'
-    # step5
+    # step 5
     ckpt_path_to_eval = F.ckpt_path_to_eval or tf_model_path
     _ = evaluation.network_eval(ckpt_path_to_eval, F.set_gpu)
-    # step6
+    # step 6
     _ = analysis.results_evaluate(ckpt_path_to_eval, '')
 
 

@@ -29,7 +29,7 @@ def network_eval(save_file_path, set_gpu):
     d['batch_size'], d['set_gpu'] = 1, set_gpu
 
     print('EVALUATING...... D values:')
-    _ = [print(i, ":", d[i]) for i in d]
+    _ = [print('    ', i, ":", d[i]) for i in d]
 
     feature_path_list = basepy.get_1tier_file_path_list(d['npy_file_path'], suffix='.npy')
 
