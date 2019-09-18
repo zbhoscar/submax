@@ -67,11 +67,14 @@ python3 zclips_npy2npy_reform.py -multiprocessing=True -var1=0 -var2=0
                        '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt',
                        'default to UCFCrime, else specific to UCSD.')
     tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
+    tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')
+    tags.DEFINE_integer('saving_interval', 20, 'every ? epochs to save')
 
 python3 zc3d_npy_train.py -npy_file_path=/absolute/datasets/anoma_motion_4training_original_c3d_npy -set_gpu=0
                           -training_list=/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt
                           -batch_size=64 -epoch_num=900 -learning_rate_base=0.001 -moving_average_decay=0.99 -regularization_scale=0.00003 -fusion=standard
 
+python3 zc3d_npy_train.py -npy_file_path=/absolute/datasets/anoma_motion_4training_original_c3d_npy -set_gpu=0 -saving_interval=5 -epoch_num=225
 
 #   STEP5
     tags.DEFINE_string('save_file_path',

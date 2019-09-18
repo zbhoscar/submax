@@ -22,7 +22,11 @@ F = tags.FLAGS
 
 DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE = (
     ('/absolute/datasets/anoma', '.jpg', (240, 320),
+     16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_180_127'),
+    ('/absolute/datasets/anoma', '.jpg', (240, 320),
      16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
+    ('/absolute/datasets/anoma', '.jpg', (240, 320),
+     16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
     ('/absolute/datasets/anoma', '.jpg', (240, 320),
      16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_80_56'),
     ('/absolute/datasets/anoma', '.jpg', (240, 320),

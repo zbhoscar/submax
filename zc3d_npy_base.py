@@ -96,7 +96,7 @@ def get_np_from_txt(txt_file_path, renum=1001):
     return np.array([i[0] for i in feature], dtype='float32')
 
 
-def reform_train_list(org_txt_list, reform_txt_list):
+def reform_train_list(org_txt_list, reform_txt_list, if_print=True):
     """
     Reform for some changes in list
     :param org_txt_list:    [['Abuse/Abuse001_x264.mp4'], ['Abuse/Abuse002_x264.mp4'],...]
@@ -104,7 +104,8 @@ def reform_train_list(org_txt_list, reform_txt_list):
                              '/absolute/datasets/anoma_motion16_tfrecords/normal_train@Normal_Videos308_0_x264.txt',]
     :return:    similar to reform_txt_list
     """
-    print('List reform:')
+    if if_print:
+        print('List reform:')
     new_txt_list = []
     remove = 0
     replace = 0
@@ -112,15 +113,18 @@ def reform_train_list(org_txt_list, reform_txt_list):
         video_name = osp.basename(trainee[0]).split('_x264')[0]
         reform_txt = [i for i in reform_txt_list if video_name in i]
         if not reform_txt:
-            print('Remove  %s from txt_list' % video_name)
+            if if_print:
+                print('Remove  %s from txt_list' % video_name)
             remove += 1
         elif len(reform_txt) > 1:
             new_txt_list.extend(reform_txt)
-            print('Replace %s to' % video_name, reform_txt)
+            if if_print:
+                print('Replace %s to' % video_name, reform_txt)
             replace += 1
         else:
             new_txt_list.extend(reform_txt)
-    print('List reform DONE, remove %d videos, replace %d videos' % (remove, replace))
+    if if_print:
+        print('List reform DONE, remove %d videos, replace %d videos' % (remove, replace))
     return new_txt_list
 
 

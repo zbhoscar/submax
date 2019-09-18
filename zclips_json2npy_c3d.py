@@ -41,6 +41,7 @@ tags.DEFINE_integer('cpu3', 0, 'set multiple in cpu3.')
 F = tags.FLAGS
 
 JSON_FILE_FOLDER, DATASET_PATH = (
+    ('/absolute/datasets/anoma_motion_pyramid_180_127_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_pyramid_120_85_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_pyramid_80_56_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_pyramid_60_42_all_json', '/absolute/datasets/anoma'),
