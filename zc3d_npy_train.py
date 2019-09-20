@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 import time
 from pprint import pprint
+import random
 
 import data_io.basepy as basepy
 import data_io.basetf as basetf
@@ -12,11 +13,10 @@ import zdefault_dict
 
 
 def main(_):
-    timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
     tags = tf.flags
     # Net config
     tags.DEFINE_integer('batch_size', 64, 'batch size.')
-    tags.DEFINE_integer('epoch_num', 202, 'epoch number.')
+    tags.DEFINE_integer('epoch_num', 402, 'epoch number.')
     tags.DEFINE_float('learning_rate_base', 0.0005, 'learning rate base')
     tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
     tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
@@ -34,57 +34,75 @@ def main(_):
     tags.DEFINE_integer('saving_interval', 5, 'every ? epochs to save')
     F = tags.FLAGS
 
-    SEGMENT_NUM = int(F.npy_file_path.split('_')[-3])
-    SAVE_FILE_PATH = osp.join('/absolute/tensorflow_models', timestamp + '_' + osp.basename(F.npy_file_path),
+    _ = network_train(F, F.npy_file_path)
+
+    # _ = network_train(D, SAVE_FILE_PATH)
+
+
+def list2np_array(npy_list, reform_num=1000):
+    return np.array([base.reform_np_array(np.load(npy), reform=reform_num) for npy in npy_list])
+
+
+def decode_flags(F, npy_reformed_file_path):
+    # set np height from 'anoma_motion_reformed_pyramid_120_85_4region_maxtop_1000_c3d_npy'
+    segment_num = int(npy_reformed_file_path.split('_')[-3])
+    segment_num = segment_num * 4 if '4region' in npy_reformed_file_path else segment_num
+
+    timestamp = time.strftime("%y%m%d%H%M%S", time.localtime())
+    save_file_path = osp.join('/absolute/tensorflow_models', timestamp + '_' + osp.basename(npy_reformed_file_path),
                               timestamp + '.ckpt')
-    JSON_FILE_PATH = osp.join(basepy.check_or_create_path(osp.dirname(SAVE_FILE_PATH), show=True), 'keys.json')
-    D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(JSON_FILE_PATH,
+
+    json_file_path = osp.join(basepy.check_or_create_path(osp.dirname(save_file_path), show=True), 'keys.json')
+
+    D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(json_file_path=json_file_path,
                                                                  batch_size=F.batch_size,
                                                                  epoch_num=F.epoch_num,
                                                                  learning_rate_base=F.learning_rate_base,
                                                                  moving_average_decay=F.moving_average_decay,
                                                                  regularization_scale=F.regularization_scale,
-                                                                 npy_file_path=F.npy_file_path,
-                                                                 segment_num=SEGMENT_NUM,
+                                                                 npy_file_path=npy_reformed_file_path,
+                                                                 segment_num=segment_num,
                                                                  set_gpu=F.set_gpu,
                                                                  lambda1=0.00008,
                                                                  lambda2=0.00008,
                                                                  fusion=F.fusion,
                                                                  lasting=F.lasting,
                                                                  testing_list=F.testing_list,
-                                                                 saving_interval=F.saving_interval,
-                                                                 )
-
+                                                                 saving_interval=F.saving_interval)
     _ = [print('Preparing training ...... D values:')] + [print('    ', i, ":", D[i]) for i in D]
-    _ = network_train(D, SAVE_FILE_PATH)
+    return D, save_file_path
 
 
-def network_train(d, ckpt_file_path):
-    # with tf.device('/cpu:0'):
+def network_train(tf_flags, npy_reformed_file_path, top_k=20):
+    # decode flags
+    d, ckpt_file_path = decode_flags(tf_flags, npy_reformed_file_path)
+    # make example list
     feature_path_list = basepy.get_1tier_file_path_list(d['npy_file_path'], suffix='.npy')
-    # train_txt = '/absolute/datasets/Anomaly-Detection-Dataset/Anomaly_Train.txt'
     test_list = basepy.read_txt_lines2list(d['testing_list'], sep=' ')
     test_list = base.reform_train_list(test_list, feature_path_list, if_print=False)
     train_list = [i for i in feature_path_list if i not in test_list]
     print('TRAINING: %d training examples in all' % len(train_list))
-    # UNDO feature_dict for memo free
-    feature_dict = base.read_npy_file_path_list(train_list)
+    anomaly_npy_list = [i for i in train_list if 'normal' not in i.lower()]
+    normal_npy_list = [i for i in train_list if 'normal' in i.lower()]
+
+    # #lize feature_dict for memo free
+    # feature_dict = base.read_npy_file_path_list(train_list)
+    # anomaly_keys = [i for i in feature_dict.keys() if 'normal' not in i.lower()]
+    # normal_keys = [i for i in feature_dict.keys() if 'normal' in i.lower()]
+    # get list in all *epochs in one
+    # anomaly_list = basepy.repeat_list_for_epochs(anomaly_keys, epoch_num=d['epoch_num'], shuffle=True)
+    # normal_list = basepy.repeat_list_for_epochs(normal_keys, epoch_num=d['epoch_num'], shuffle=True)
+    # max_index = min(len(anomaly_list), len(normal_list))
+    # anomaly_list = anomaly_list[:max_index] + [False] * d['batch_size']
+    # normal_list = normal_list[:max_index] + [False] * d['batch_size']
 
     # set saving for every saving_interval epochs
-    anomaly_keys = [i for i in feature_dict.keys() if 'normal' not in i.lower()]
-    normal_keys = [i for i in feature_dict.keys() if 'normal' in i.lower()]
-    samples_in_one_epoch = min(len(anomaly_keys), len(normal_keys))
+    samples_in_one_epoch = min(len(anomaly_npy_list), len(normal_npy_list))
     step2show = [int(i * samples_in_one_epoch / d['batch_size'])
                  for i in range(d['epoch_num']) if i % int(d['saving_interval'] / 3) == 0]
     step2save = [int(i * samples_in_one_epoch / d['batch_size'])
                  for i in range(d['epoch_num']) if i % d['saving_interval'] == 0]
-
-    # get list in all *epochs in one
-    anomaly_list = basepy.repeat_list_for_epochs(anomaly_keys, epoch_num=d['epoch_num'], shuffle=True)
-    normal_list = basepy.repeat_list_for_epochs(normal_keys, epoch_num=d['epoch_num'], shuffle=True)
-    max_index = min(len(anomaly_list), len(normal_list))
-    anomaly_list = anomaly_list[:max_index] + [False] * d['batch_size']
-    normal_list = normal_list[:max_index] + [False] * d['batch_size']
+    step_in_all = list(range(step2save[-1] + 1)) + [False]
 
     # NET SETTING
     with tf.name_scope('input'):
@@ -93,16 +111,13 @@ def network_train(d, ckpt_file_path):
 
     with tf.name_scope('forward-propagation'):
         score_anomaly = base.network_fn(input_anom,
-                                        fusion=d['fusion'],
-                                        feature_len=d['feature_len'],
-                                        segment_num=d['segment_num'])
+                                        fusion=d['fusion'], feature_len=d['feature_len'], segment_num=d['segment_num'])
         score_normal = base.network_fn(input_norm,
-                                       fusion=d['fusion'],
-                                       feature_len=d['feature_len'],
-                                       segment_num=d['segment_num'])
+                                       fusion=d['fusion'], feature_len=d['feature_len'], segment_num=d['segment_num'])
 
     with tf.name_scope('loss'):
-        mil_loss = tf.maximum(0., 1. - tf.reduce_max(score_anomaly, axis=1) + tf.reduce_max(score_normal, axis=1))
+        top_max_anomaly, _ = tf.nn.top_k(score_anomaly, top_k)
+        mil_loss = tf.maximum(0., 1. - tf.reduce_mean(top_max_anomaly, axis=1) + tf.reduce_max(score_normal, axis=1))
         regu = tf.contrib.layers.apply_regularization(
             tf.contrib.layers.l2_regularizer(d['regularization_scale']), tf.trainable_variables())
         mean_mil = tf.reduce_mean(mil_loss)
@@ -138,24 +153,25 @@ def network_train(d, ckpt_file_path):
             saver_goon.restore(sess, restore_ckpt)
 
         step = 0
-        while anomaly_list[step * d['batch_size'] + d['batch_size'] - 1]:
+        # while anomaly_list[step * d['batch_size'] + d['batch_size'] - 1]:
+        while step_in_all[step]:
             time1 = time.time()
-            batch_start, batch_end = step * d['batch_size'], step * d['batch_size'] + d['batch_size']
-
-            anomaly_in = np.empty((d['batch_size'], d['segment_num'], d['feature_len']), dtype='float32')
-            normal_in = np.empty((d['batch_size'], d['segment_num'], d['feature_len']), dtype='float32')
-            for j, i in enumerate(anomaly_list[batch_start:batch_end]):
-                anomaly_in[j] = base.reform_np_array(feature_dict[i], reform=d['segment_num'])
-            for j, i in enumerate(normal_list[batch_start:batch_end]):
-                normal_in[j] = base.reform_np_array(feature_dict[i], reform=d['segment_num'])
+            # batch_start, batch_end = step * d['batch_size'], step * d['batch_size'] + d['batch_size']
+            #
+            # anomaly_in = np.empty((d['batch_size'], d['segment_num'], d['feature_len']), dtype='float32')
+            # normal_in = np.empty((d['batch_size'], d['segment_num'], d['feature_len']), dtype='float32')
+            # for j, i in enumerate(anomaly_list[batch_start:batch_end]):
+            #     anomaly_in[j] = base.reform_np_array(feature_dict[i], reform=d['segment_num'])
+            # for j, i in enumerate(normal_list[batch_start:batch_end]):
+            #     normal_in[j] = base.reform_np_array(feature_dict[i], reform=d['segment_num'])
+            anomaly_in = list2np_array(random.sample(anomaly_npy_list, d['batch_size']), reform_num=d['segment_num'])
+            normal_in = list2np_array(random.sample(normal_npy_list, d['batch_size']), reform_num=d['segment_num'])
 
             time2 = time.time()
-            # print(anomaly_in.shape)
             loss_, _, mean_mil_, regu_ = sess.run([loss, train_op, mean_mil, regu],
-                                  feed_dict={input_anom: anomaly_in, input_norm: normal_in})
+                                                  feed_dict={input_anom: anomaly_in, input_norm: normal_in})
             if step in step2show:
-                print('After %5d steps, loss = %.5e, mil = %.5e, regu = %.5e, '
-                      'feed: %.3fsec, train: %.3fsec' %
+                print('After %5d steps, loss = %.5e, mil = %.5e, regu = %.5e, feed: %.3fsec, train: %.3fsec' %
                       (step, loss_, mean_mil_, regu_, time2 - time1, time.time() - time2))
             if step in step2save:
                 print('Save tfrecords at step %5d / %4d epochs.'

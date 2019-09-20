@@ -36,7 +36,7 @@ tags = tf.flags
 tags.DEFINE_integer('var1', 0, 'choose JSON_FILE_FOLDER, DATASET_PATH.')
 tags.DEFINE_integer('cpu0', 0, 'set multiple in cpu0.')
 tags.DEFINE_integer('cpu1', 0, 'set multiple in cpu1.')
-tags.DEFINE_integer('cpu2', 0, 'set multiple in cpu2.')
+tags.DEFINE_integer('cpu2', 1, 'set multiple in cpu2.')
 tags.DEFINE_integer('cpu3', 0, 'set multiple in cpu3.')
 F = tags.FLAGS
 

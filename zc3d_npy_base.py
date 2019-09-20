@@ -128,17 +128,19 @@ def reform_train_list(org_txt_list, reform_txt_list, if_print=True):
     return new_txt_list
 
 
-def reform_np_array(np_array, reform=1001, model='standard'):
-    if np_array.shape[0] > reform:
-        np_copy = copy.deepcopy(np_array)
-        np.random.shuffle(np_copy)
-        np_output = np_copy[:reform, :4096]
-    elif np_array.shape[0] == reform:
+def reform_np_array(np_array, reform=1000):
+    if np_array.shape[0] == reform:
         np_output = np_array[:, :4096]
-    else:
+    elif np_array.shape[0] < reform:
         quotient = reform // np_array.shape[0]
         np_temp = np.concatenate((np_array, np_array.repeat(quotient - 1, axis=0)), axis=0)
         np_output = np.concatenate((np_temp, np_array[:reform - len(np_temp)]), axis=0)[:, :4096]
+    # if np_array.shape[0] > reform:
+    #     np_copy = copy.deepcopy(np_array)
+    #     np.random.shuffle(np_copy)
+    #     np_output = np_copy[:reform, :4096]
+    else:
+        raise ValueError('np_array height > reform num: %d > %d' %(np_array.shape[0], reform))
     return np_output
 
 
