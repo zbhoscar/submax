@@ -54,7 +54,7 @@ def decode_flags(F, npy_reformed_file_path):
 
     json_file_path = osp.join(basepy.check_or_create_path(osp.dirname(save_file_path), show=True), 'keys.json')
 
-    D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(json_file_path=json_file_path,
+    D = basepy.DictCtrl(zdefault_dict.EXPERIMENT_KEYS).save2path(json_path=json_file_path,
                                                                  batch_size=F.batch_size,
                                                                  epoch_num=F.epoch_num,
                                                                  learning_rate_base=F.learning_rate_base,
@@ -154,7 +154,7 @@ def network_train(tf_flags, npy_reformed_file_path, top_k=20):
 
         step = 0
         # while anomaly_list[step * d['batch_size'] + d['batch_size'] - 1]:
-        while step_in_all[step]:
+        while step_in_all[step] is not False:
             time1 = time.time()
             # batch_start, batch_end = step * d['batch_size'], step * d['batch_size'] + d['batch_size']
             #
