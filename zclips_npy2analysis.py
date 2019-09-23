@@ -44,7 +44,7 @@ tags.DEFINE_string('ckpt_path_to_eval', '', ' "" for brand new, or model folder 
 def main(_):
     if not F.ckpt_path_to_eval:
         # step 3
-        reform_type, reform_num = (('maxtop', 500), ('maxtop', 250), ('segment', 32))[F.var0]
+        reform_type, reform_num = (('maxtop', 500), ('maxtop', 250), ('maxtop', 128), ('segment', 32))[F.var0]
         multiscale, multiregion = (('pyramid', 4), ('pyramid', 1), ('single', 4), ('single', 1), (None, None))[F.var1]
 
         npy_reformed_file_path = reform.npy_reform(F.npy_file_path,

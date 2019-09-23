@@ -52,8 +52,7 @@ def network_eval(save_file_path, set_gpu):
 
         _ = [eval_one_ckpt(merged_keys, merged_features, d, ckpt_file=one_ckpt)
              for one_ckpt in ckpt_check_list]
-
-    print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
+    print('EVALUATION DONE ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
     return None
 
 
@@ -77,14 +76,13 @@ def eval_one_ckpt(merged_keys, merged_features, d, ckpt_file=None, npy_folder_su
 
     init_op = tf.global_variables_initializer()
     os.environ["CUDA_VISIBLE_DEVICES"] = d['set_gpu']
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
     gpu_options = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_options)
     with tf.Session(config=config) as sess:
         sess.run(init_op)
         saver.restore(sess, ckpt_file)
-
-        print('Program begins, timestamp %s' % time.asctime(time.localtime(time.time())))
-
+        # print('Program begins, timestamp %s' % time.asctime(time.localtime(time.time())))
         step, dict_key, dict_key_json, height = 0, None, [], None
         while merged_keys[step]:
             s = sess.run(score_anomaly,
@@ -107,8 +105,6 @@ def eval_one_ckpt(merged_keys, merged_features, d, ckpt_file=None, npy_folder_su
                     # print('%s done.' % merged_keys[step])
                     dict_key, dict_key_json, height = None, [], None
             step += 1
-    # END
-    print('EVALUATION DONE ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
 if __name__ == '__main__':
