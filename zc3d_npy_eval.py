@@ -104,7 +104,7 @@ def eval_one_ckpt(merged_keys, merged_features, d, ckpt_file=None, npy_folder_su
                     eval_npy_path = basepy.check_or_create_path(ckpt_file + npy_folder_suffix)
                     with open(osp.join(eval_npy_path, dict_key + '.json'), 'w') as f:
                         json.dump(dict_key_json, f)
-                    print('%s done.' % merged_keys[step])
+                    # print('%s done.' % merged_keys[step])
                     dict_key, dict_key_json, height = None, [], None
             step += 1
     # END

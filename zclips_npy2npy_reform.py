@@ -72,7 +72,7 @@ def npy_list_preprocessing(npy_file_list, eval_result_folder,
 
 
 def npy_preprocessing(npy_file, eval_result_folder, multiscale, multiregion, reform_type, reform_num, test_str):
-    print('processing %s ...' % npy_file)
+    # print('processing %s ...' % npy_file)
     npy_data = np.load(npy_file)
     if multiregion == 1:
         line_split = [i for i in range(npy_data.shape[0]) if i % 4 == 0]

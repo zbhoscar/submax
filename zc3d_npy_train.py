@@ -22,7 +22,7 @@ def main(_):
     tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
     tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
     tags.DEFINE_string('npy_file_path',
-                       '/absolute/datasets/anoma_motion_reformed_pyramid_120_85_4region_maxtop_1000_c3d_npy',
+                       '/absolute/datasets/anoma_motion_reformed_pyramid_120_85_4region_maxtop_500_c3d_npy',
                        'npy file path')
     tags.DEFINE_string('testing_list',
                        '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
@@ -84,6 +84,9 @@ def network_train(tf_flags, npy_reformed_file_path, top_k=20):
     print('TRAINING: %d training examples in all' % len(train_list))
     anomaly_npy_list = [i for i in train_list if 'normal' not in i.lower()]
     normal_npy_list = [i for i in train_list if 'normal' in i.lower()]
+
+    anomaly_npy_reformed = list2np_array(anomaly_npy_list, reform_num=d['segment_num'])
+    normal_npy_reformed = list2np_array(normal_npy_list, reform_num=d['segment_num'])
 
     # #lize feature_dict for memo free
     # feature_dict = base.read_npy_file_path_list(train_list)
@@ -157,15 +160,16 @@ def network_train(tf_flags, npy_reformed_file_path, top_k=20):
         while step_in_all[step] is not False:
             time1 = time.time()
             # batch_start, batch_end = step * d['batch_size'], step * d['batch_size'] + d['batch_size']
-            #
             # anomaly_in = np.empty((d['batch_size'], d['segment_num'], d['feature_len']), dtype='float32')
             # normal_in = np.empty((d['batch_size'], d['segment_num'], d['feature_len']), dtype='float32')
             # for j, i in enumerate(anomaly_list[batch_start:batch_end]):
             #     anomaly_in[j] = base.reform_np_array(feature_dict[i], reform=d['segment_num'])
             # for j, i in enumerate(normal_list[batch_start:batch_end]):
             #     normal_in[j] = base.reform_np_array(feature_dict[i], reform=d['segment_num'])
-            anomaly_in = list2np_array(random.sample(anomaly_npy_list, d['batch_size']), reform_num=d['segment_num'])
-            normal_in = list2np_array(random.sample(normal_npy_list, d['batch_size']), reform_num=d['segment_num'])
+            # anomaly_in = list2np_array(random.sample(anomaly_npy_list, d['batch_size']), reform_num=d['segment_num'])
+            # normal_in = list2np_array(random.sample(normal_npy_list, d['batch_size']), reform_num=d['segment_num'])
+            anomaly_in = anomaly_npy_reformed[np.random.choice(anomaly_npy_reformed.shape[0], d['batch_size'])]
+            normal_in = normal_npy_reformed[np.random.choice(normal_npy_reformed.shape[0], d['batch_size'])]
 
             time2 = time.time()
             loss_, _, mean_mil_, regu_ = sess.run([loss, train_op, mean_mil, regu],
