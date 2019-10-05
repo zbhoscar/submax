@@ -31,15 +31,16 @@ DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE 
      16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_80_56'),
     ('/absolute/datasets/anoma', '.jpg', (240, 320),
      16, 16, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
-    ('/absolute/datasets/anoma', '.jpg', (240, 320), 16, 16, 2, None, 'original'),
+    ('/absolute/datasets/anoma', '.jpg', (240, 320),
+     16, 16, 2, None, 'original'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_120_85'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_80_56'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
-    ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360), 16, 8, 2, None, 'original'),
-)[F.var1]
+    ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
+     16, 8, 2, None, 'original'))[F.var1]
 # FOR TEST IN BASELINE
 # TYPE = 'original'
 H, W = FRAME_SIZE
