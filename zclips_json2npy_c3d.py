@@ -33,7 +33,7 @@ import multiprocessing as mp
 
 tags = tf.flags
 # Net config
-tags.DEFINE_integer('var1', 0, 'choose JSON_FILE_FOLDER, DATASET_PATH.')
+tags.DEFINE_integer('var0', 0, 'choose JSON_FILE_FOLDER, DATASET_PATH.')
 tags.DEFINE_integer('cpu0', 1, 'set multiple in cpu0.')
 tags.DEFINE_integer('cpu1', 0, 'set multiple in cpu1.')
 tags.DEFINE_integer('cpu2', 0, 'set multiple in cpu2.')
@@ -50,7 +50,7 @@ JSON_FILE_FOLDER, DATASET_PATH = (
     ('/absolute/datasets/UCSDped2_reform_motion_pyramid_80_56_all_json', '/absolute/datasets/UCSDped2_reform'),
     ('/absolute/datasets/UCSDped2_reform_motion_pyramid_60_42_all_json', '/absolute/datasets/UCSDped2_reform'),
     ('/absolute/datasets/UCSDped2_reform_motion_original_all_json', '/absolute/datasets/UCSDped2_reform'),
-    'TYPE')[F.var1]
+    'TYPE')[F.var0]
 
 EVAL_RESULT_FOLDER = JSON_FILE_FOLDER.replace('all_json', 'c3d_npy')
 
