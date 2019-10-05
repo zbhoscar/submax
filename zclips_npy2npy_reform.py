@@ -18,7 +18,7 @@ def main(_):
     tags.DEFINE_string('npy_file_path',
                        '/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy',
                        'npy file folder to be reformed.')
-    tags.DEFINE_string('test_file',
+    tags.DEFINE_string('testing_list',
                        '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
                        'soru.')
     tags.DEFINE_boolean('multiprocessing', True, 'choose multiprocessing or not.')

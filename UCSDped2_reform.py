@@ -10,6 +10,21 @@ import time
 
 DATASET_PATH = '/absolute/datasets/UCSDped2'
 TRAIN_TEST_LIST_FOLDER = '/absolute/datasets/UCSDped2_split_list/10_fold_001'
+ANNOTATION_TXT_PATH = '/absolute/datasets/UCSDped2_split_list/temproal_annotation.txt'
+
+
+def main():
+    annotation_all = basepy.read_txt_lines2list(ANNOTATION_TXT_PATH)
+    anomal_list = [i for i in annotation_all if 'anomaly' in i[0].lower()]
+    normal_list = [i for i in annotation_all if 'normal' in i[0].lower()]
+
+    for i in range(10):
+        write_in = random.sample(anomal_list, 6) + random.sample(normal_list, 12)
+        txt_for_test = osp.join(basepy.check_or_create_path(TRAIN_TEST_LIST_FOLDER), 'v'+str(i).zfill(2)+'_test.txt')
+        for j in write_in:
+            _ = basepy.write_txt_add_lines(txt_for_test, j[0], sep=' ')
+
+    print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
 def make_fold_split_list(path_list, valid_num, anom_in_train, norm_in_train, write_to=None):
@@ -33,7 +48,7 @@ def make_fold_split_list(path_list, valid_num, anom_in_train, norm_in_train, wri
         _ = [basepy.write_txt_add_lines(txt_for_test, i, sep=' ') for i in list_for_test]
 
 
-def main():
+def main_old():
     video_path_list = basepy.get_2tier_folder_path_list(DATASET_PATH)
 
     video_reform_list = [i.replace('Test', 'Anomaly') if 'Test' in i else i.replace('Train', 'Normal')

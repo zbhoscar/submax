@@ -15,7 +15,7 @@ def main(_):
     tags = tf.flags
     F = tags.FLAGS
     tags.DEFINE_string('save_file_path',
-                       '/absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy/190912162832.ckpt-1',
+                       '/absolute/tensorflow_models/191005175703_UCSDped2_reform_motion_reformed_single_120_85_4region_maxtop_256_c3d_npy',
                        'model folder path, or model ckpt file path.')
     tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 
@@ -63,48 +63,49 @@ def merge_keys_and_features_in_one(feature_dict):
 
 
 def eval_one_ckpt(merged_keys, merged_features, d, ckpt_file=None, npy_folder_suffix='_eval_json'):
-    with tf.name_scope('input'):
-        input_test = tf.placeholder(tf.float32, [1, 1, d['feature_len']], name='anom')
+    if not osp.exists(ckpt_file + npy_folder_suffix):
+        with tf.name_scope('input'):
+            input_test = tf.placeholder(tf.float32, [1, 1, d['feature_len']], name='anom')
 
-    with tf.name_scope('forward-propagation'):
-        score_anomaly = base.network_fn(input_test,
-                                        fusion=d['fusion'],
-                                        feature_len=d['feature_len'],
-                                        segment_num=1,
-                                        is_training=False)
-    saver = tf.train.Saver()
+        with tf.name_scope('forward-propagation'):
+            score_anomaly = base.network_fn(input_test,
+                                            fusion=d['fusion'],
+                                            feature_len=d['feature_len'],
+                                            segment_num=1,
+                                            is_training=False)
+        saver = tf.train.Saver()
 
-    init_op = tf.global_variables_initializer()
-    os.environ["CUDA_VISIBLE_DEVICES"] = d['set_gpu']
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-    gpu_options = tf.GPUOptions(allow_growth=True)
-    config = tf.ConfigProto(gpu_options=gpu_options)
-    with tf.Session(config=config) as sess:
-        sess.run(init_op)
-        saver.restore(sess, ckpt_file)
-        # print('Program begins, timestamp %s' % time.asctime(time.localtime(time.time())))
-        step, dict_key, dict_key_json, height = 0, None, [], None
-        while merged_keys[step]:
-            s = sess.run(score_anomaly,
-                         feed_dict={
-                             input_test: np.expand_dims(np.expand_dims(merged_features[step][:4096], axis=0), axis=0)})
+        init_op = tf.global_variables_initializer()
+        os.environ["CUDA_VISIBLE_DEVICES"] = d['set_gpu']
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        config = tf.ConfigProto(gpu_options=gpu_options)
+        with tf.Session(config=config) as sess:
+            sess.run(init_op)
+            saver.restore(sess, ckpt_file)
+            # print('Program begins, timestamp %s' % time.asctime(time.localtime(time.time())))
+            step, dict_key, dict_key_json, height = 0, None, [], None
+            while merged_keys[step]:
+                s = sess.run(score_anomaly,
+                             feed_dict={
+                                 input_test: np.expand_dims(np.expand_dims(merged_features[step][:4096], axis=0), axis=0)})
 
-            class_name, video_name = merged_keys[step].split('@')
-            line_to_json = [class_name, video_name] + merged_features[step][4096:].tolist() + s.tolist()[0]
+                class_name, video_name = merged_keys[step].split('@')
+                line_to_json = [class_name, video_name] + merged_features[step][4096:].tolist() + s.tolist()[0]
 
-            if merged_keys[step] != dict_key:
-                dict_key = merged_keys[step]
-                height = [clip for clip in merged_keys[:-1] if clip == dict_key].__len__()
-                dict_key_json.append(line_to_json)
-            else:
-                dict_key_json.append(line_to_json)
-                if dict_key_json.__len__() == height:
-                    eval_npy_path = basepy.check_or_create_path(ckpt_file + npy_folder_suffix)
-                    with open(osp.join(eval_npy_path, dict_key + '.json'), 'w') as f:
-                        json.dump(dict_key_json, f)
-                    # print('%s done.' % merged_keys[step])
-                    dict_key, dict_key_json, height = None, [], None
-            step += 1
+                if merged_keys[step] != dict_key:
+                    dict_key = merged_keys[step]
+                    height = [clip for clip in merged_keys[:-1] if clip == dict_key].__len__()
+                    dict_key_json.append(line_to_json)
+                else:
+                    dict_key_json.append(line_to_json)
+                    if dict_key_json.__len__() == height:
+                        eval_npy_path = basepy.check_or_create_path(ckpt_file + npy_folder_suffix)
+                        with open(osp.join(eval_npy_path, dict_key + '.json'), 'w') as f:
+                            json.dump(dict_key_json, f)
+                        # print('%s done.' % merged_keys[step])
+                        dict_key, dict_key_json, height = None, [], None
+                step += 1
 
 
 if __name__ == '__main__':
