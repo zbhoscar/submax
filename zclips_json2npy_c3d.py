@@ -46,6 +46,10 @@ JSON_FILE_FOLDER, DATASET_PATH = (
     ('/absolute/datasets/anoma_motion_pyramid_80_56_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_pyramid_60_42_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_original_all_json', '/absolute/datasets/anoma'),
+    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_120_85_all_json', '/absolute/datasets/UCSDped2_reform'),
+    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_80_56_all_json', '/absolute/datasets/UCSDped2_reform'),
+    ('/absolute/datasets/UCSDped2_reform_motion_pyramid_60_42_all_json', '/absolute/datasets/UCSDped2_reform'),
+    ('/absolute/datasets/UCSDped2_reform_motion_original_all_json', '/absolute/datasets/UCSDped2_reform'),
     'TYPE')[F.var1]
 
 EVAL_RESULT_FOLDER = JSON_FILE_FOLDER.replace('all_json', 'c3d_npy')
