@@ -1,15 +1,11 @@
 import json
 import data_io.basepy as basepy
 import os.path as osp
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import zdefault_dict
 from sklearn import metrics
 import time
 import tensorflow as tf
-
-matplotlib.use('Agg')
 
 
 def main(_):
@@ -102,22 +98,33 @@ def get_temporal_duration_in_folder(results_json_path, temporal_annotation_file,
         video_name, deflated_length, temporal_score, temporal_score_select, temporal_truth = \
             get_temporal_duration(json_file, inflate, temporal_annotation_file)
         if score_and_truth_fig_save_path:
-            _ = basepy.check_or_create_path(score_and_truth_fig_save_path)
-            x = np.linspace(0, deflated_length * inflate, deflated_length)
-            y1 = np.array(temporal_score)
-            y2 = np.array(temporal_truth)
-            plt.figure()
-            plt.plot(x, y1)
-            plt.plot(x, y2)
-            plt.ylim(0, 1.1)
-            plt.xlim(0, deflated_length * inflate + 4)
-            plt.title(video_name)
-            plt.xlabel('Frame number')
-            plt.ylabel('Anomaly score')
-            plt.savefig(osp.join(score_and_truth_fig_save_path, video_name) + '.png')
+            show_something(score_and_truth_fig_save_path, deflated_length, inflate,
+                           temporal_score, temporal_truth, video_name)
         videos_temporal_results.append([video_name, deflated_length,
                                         temporal_score, temporal_score_select, temporal_truth])
     return videos_temporal_results
+
+
+def show_something(score_and_truth_fig_save_path, deflated_length, inflate,
+                   temporal_score,temporal_truth, video_name):
+    import matplotlib
+    import matplotlib.pyplot as plt
+    matplotlib.use('Agg')
+
+    _ = basepy.check_or_create_path(score_and_truth_fig_save_path)
+    x = np.linspace(0, deflated_length * inflate, deflated_length)
+    y1 = np.array(temporal_score)
+    y2 = np.array(temporal_truth)
+    plt.figure()
+    plt.plot(x, y1)
+    plt.plot(x, y2)
+    plt.ylim(0, 1.1)
+    plt.xlim(0, deflated_length * inflate + 4)
+    plt.title(video_name)
+    plt.xlabel('Frame number')
+    plt.ylabel('Anomaly score')
+    plt.savefig(osp.join(score_and_truth_fig_save_path, video_name) + '.png')
+
 
 
 def get_temporal_duration(json_file, inflate, temporal_annotation_file):

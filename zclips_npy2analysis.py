@@ -2,12 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os.path as osp
 import tensorflow as tf
-import time
 
-import zdefault_dict
-import data_io.basepy as basepy
 import zclips_npy2npy_reform as reform
 import zc3d_npy_train as train
 import zc3d_npy_eval as evaluation
@@ -29,13 +25,13 @@ tags.DEFINE_integer('var1', 0, 'choose MULTISCALE, MULTIREGION.')
 # step 4 TRAINING
 tags.DEFINE_string('set_gpu', '0', 'Single gpu version, index select')
 tags.DEFINE_integer('batch_size', 64, 'batch size.')
-tags.DEFINE_integer('epoch_num', 404, 'epoch number.')
+tags.DEFINE_integer('epoch_num', 1202, 'epoch number.')
 tags.DEFINE_float('learning_rate_base', 0.0005, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
 tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
 tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')
-tags.DEFINE_integer('saving_interval', 5, 'every ? epochs to save')
+tags.DEFINE_integer('saving_interval', 10, 'every ? epochs to save')
 # step 5 FOR EVALUATION # step 6 FOR ANALYSIS
 # '' or /absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy
 tags.DEFINE_string('ckpt_path_to_eval', '', ' "" for brand new, or model folder path, or model ckpt file path.')
@@ -44,7 +40,7 @@ tags.DEFINE_string('ckpt_path_to_eval', '', ' "" for brand new, or model folder 
 def main(_):
     if not F.ckpt_path_to_eval:
         # step 3
-        reform_type, reform_num = (('maxtop', 500), ('maxtop', 250), ('maxtop', 128), ('segment', 32))[F.var0]
+        reform_type, reform_num = (('maxtop', 256), ('maxtop', 512), ('maxtop', 128), ('segment', 32))[F.var0]
         multiscale, multiregion = (('pyramid', 4), ('pyramid', 1), ('single', 4), ('single', 1), (None, None))[F.var1]
 
         npy_reformed_file_path = reform.npy_reform(F.npy_file_path,
