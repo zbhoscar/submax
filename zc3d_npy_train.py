@@ -17,8 +17,8 @@ def main(_):
     # Net config
     tags.DEFINE_integer('batch_size', 64, 'batch size.')
     tags.DEFINE_integer('epoch_num', 1202, 'epoch number.')
-    tags.DEFINE_float('learning_rate_base', 0.001, 'learning rate base')
-    tags.DEFINE_float('moving_average_decay', 0.99, 'moving average decay')
+    tags.DEFINE_float('learning_rate_base', 0.0001, 'learning rate base')
+    tags.DEFINE_float('moving_average_decay', 0.999, 'moving average decay')
     tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
     tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
     tags.DEFINE_string('npy_file_path',
@@ -133,6 +133,7 @@ def network_train(tf_flags, npy_reformed_file_path, top_k=20):
 
     init_op = tf.global_variables_initializer()
     os.environ["CUDA_VISIBLE_DEVICES"] = d['set_gpu']
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = '1'
     gpu_options = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_options)
     with tf.Session(config=config) as sess:

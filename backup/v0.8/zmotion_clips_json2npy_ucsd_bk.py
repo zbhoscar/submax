@@ -105,7 +105,7 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
     config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = 0.9
     os.environ["CUDA_VISIBLE_DEVICES"] = set_gpu
-    # os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = '1'
     saver = tf.train.Saver()
 
     init_op = (tf.local_variables_initializer(), tf.global_variables_initializer())
