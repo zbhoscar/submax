@@ -25,7 +25,6 @@ end = tf.reshape(end, [-1, b])
 
 init_op = tf.global_variables_initializer()
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 gpu_options = tf.GPUOptions(allow_growth=True)
 config = tf.ConfigProto(gpu_options=gpu_options)
 with tf.Session(config=config) as sess:

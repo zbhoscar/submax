@@ -13,7 +13,6 @@ from tqdm import  tqdm
 import time
 from c3dtf1.input_data_v1 import *
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 class C3dModel(object):
     def __init__(self,

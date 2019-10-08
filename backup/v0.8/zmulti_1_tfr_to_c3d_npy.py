@@ -114,7 +114,7 @@ def run_test(tfr_list, eval_result_folder, batch_size=1, set_gpu='0'):
     config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = 0.9
     os.environ["CUDA_VISIBLE_DEVICES"] = set_gpu
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+    # os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
     saver = tf.train.Saver()
 
     init_op = (tf.local_variables_initializer(), tf.global_variables_initializer())

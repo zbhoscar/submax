@@ -121,7 +121,6 @@ def main(_):
 
     init_op = tf.global_variables_initializer()
     os.environ["CUDA_VISIBLE_DEVICES"] = D['set_gpu']
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
     gpu_options = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_options)
     with tf.Session(config=config) as sess:
