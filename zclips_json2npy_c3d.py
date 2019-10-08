@@ -33,7 +33,7 @@ import multiprocessing as mp
 
 tags = tf.flags
 # Net config
-tags.DEFINE_integer('var1', 0, 'choose JSON_FILE_FOLDER, DATASET_PATH.')
+tags.DEFINE_integer('var0', 0, 'choose JSON_FILE_FOLDER, DATASET_PATH.')
 tags.DEFINE_integer('cpu0', 1, 'set multiple in cpu0.')
 tags.DEFINE_integer('cpu1', 0, 'set multiple in cpu1.')
 tags.DEFINE_integer('cpu2', 0, 'set multiple in cpu2.')
@@ -46,7 +46,7 @@ JSON_FILE_FOLDER, DATASET_PATH = (
     ('/absolute/datasets/anoma_motion_pyramid_80_56_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_pyramid_60_42_all_json', '/absolute/datasets/anoma'),
     ('/absolute/datasets/anoma_motion_original_all_json', '/absolute/datasets/anoma'),
-    'TYPE')[F.var1]
+    'TYPE')[F.var0]
 
 EVAL_RESULT_FOLDER = JSON_FILE_FOLDER.replace('all_json', 'c3d_npy')
 
@@ -116,7 +116,7 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
     config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = 0.9
     os.environ["CUDA_VISIBLE_DEVICES"] = set_gpu
-    # os.environ["TF_CPP_MIN_LOG_LEVEL"] = '3'
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = '1'
     saver = tf.train.Saver()
 
     init_op = (tf.local_variables_initializer(), tf.global_variables_initializer())
@@ -170,7 +170,7 @@ def run_test(json_path_list, dataset_path=None, eval_result_folder=None, batch_s
         print('------ Finish ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
 
 
-def get_merge_list(json_path_list, frame_select=16):
+def get_merge_list(json_path_list, frame_select=None):
     output = []
     for json_path in json_path_list:
         # eg. json_path = '/absolute/datasets/anoma_motion_all_json_type_1/normal_train@Normal_Videos308_3_x264.json'

@@ -108,7 +108,7 @@ def network_train(tf_flags, npy_reformed_file_path, top_k=20):
 
     with tf.name_scope('loss'):
         top_max_anomaly, _ = tf.nn.top_k(score_anomaly, top_k)
-        mil_loss = tf.maximum(0., 0.85 - tf.reduce_min(top_max_anomaly, axis=1) + tf.reduce_max(score_normal, axis=1))
+        mil_loss = tf.maximum(0., 1 - tf.reduce_min(top_max_anomaly, axis=1) + tf.reduce_max(score_normal, axis=1))
         regu = tf.contrib.layers.apply_regularization(
             tf.contrib.layers.l2_regularizer(d['regularization_scale']), tf.trainable_variables())
         mean_mil = tf.reduce_mean(mil_loss)
@@ -133,6 +133,7 @@ def network_train(tf_flags, npy_reformed_file_path, top_k=20):
 
     init_op = tf.global_variables_initializer()
     os.environ["CUDA_VISIBLE_DEVICES"] = d['set_gpu']
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = '1'
     gpu_options = tf.GPUOptions(allow_growth=True)
     config = tf.ConfigProto(gpu_options=gpu_options)
     with tf.Session(config=config) as sess:

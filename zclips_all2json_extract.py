@@ -15,7 +15,7 @@ import tensorflow as tf
 
 tags = tf.flags
 # Net config
-tags.DEFINE_integer('var1', 0,
+tags.DEFINE_integer('var0', 0,
                     'choose DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE.')
 tags.DEFINE_boolean('multiprocessing', True, 'choose multiprocessing or not.')
 F = tags.FLAGS
@@ -40,7 +40,7 @@ DATASET_PATH, FRAME_SUFFIX, FRAME_SIZE, CLIP_LEN, STEP, OPTICAL, CRITERIA, TYPE 
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
      16, 8, 2, (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1), 'pyramid_60_42'),
     ('/absolute/datasets/UCSDped2_reform', '.tif', (240, 360),
-     16, 8, 2, None, 'original'))[F.var1]
+     16, 8, 2, None, 'original'))[F.var0]
 # FOR TEST IN BASELINE
 # TYPE = 'original'
 H, W = FRAME_SIZE

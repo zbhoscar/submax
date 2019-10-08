@@ -22,11 +22,11 @@ def main(_):
                        '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
                        'soru.')
     tags.DEFINE_boolean('multiprocessing', True, 'choose multiprocessing or not.')
-    tags.DEFINE_integer('var1', 0, 'choose NPY_FILE_FOLDER, SEGMENT_NUM, TEST_FILE.')
-    tags.DEFINE_integer('var2', 0, 'choose MULTISCALE, MULTIREGION.')
+    tags.DEFINE_integer('var0', 0, 'choose NPY_FILE_FOLDER, SEGMENT_NUM, TEST_FILE.')
+    tags.DEFINE_integer('var1', 0, 'choose MULTISCALE, MULTIREGION.')
     F = tags.FLAGS
-    REFORM_TYPE, REFORM_NUM = (('maxtop', 1000), ('segment', 32))[F.var1]
-    MULTISCALE, MULTIREGION = (('pyramid', 4), ('pyramid', 1), ('single', 4), ('single', 1), (None, None))[F.var2]
+    REFORM_TYPE, REFORM_NUM = (('maxtop', 1000), ('segment', 32))[F.var0]
+    MULTISCALE, MULTIREGION = (('pyramid', 4), ('pyramid', 1), ('single', 4), ('single', 1), (None, None))[F.var1]
 
     _ = npy_reform(F.npy_file_path, MULTISCALE, MULTIREGION, REFORM_TYPE, REFORM_NUM, F.multiprocessing, F.test_file)
 
@@ -64,6 +64,7 @@ def npy_reform(npy_file_folder_path,
     # END
     print('Converting DONE ------ Debug Symbol ------ %s ------' % time.asctime(time.localtime(time.time())))
     return results_folder_path
+
 
 def npy_list_preprocessing(npy_file_list, eval_result_folder,
                            multiscale, multiregion, reform_type, number_in_one, test_str):

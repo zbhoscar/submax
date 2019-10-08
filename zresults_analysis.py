@@ -42,7 +42,7 @@ def results_evaluate(results_json_path, save_plot):
     if '_eval_json' in results_json_path[-10:]:
         fpr, tpr, thresholds, auc, all_videos_map, vfpr, vtpr, vthresholds, vauc, videos_order, \
         fpr_s, tpr_s, thresholds_s, auc_s, vfpr_s, vtpr_s, vthresholds_s, vauc_s = \
-            analysis_in_one_ckpt( results_json_path, temporal_annotation_file, inflate, save_plot)
+            analysis_in_one_ckpt(results_json_path, temporal_annotation_file, inflate, save_plot)
     else:
         _eval_json_list = basepy.get_1tier_file_path_list(results_json_path, suffix='_eval_json')
         _eval_json_list = sorted(_eval_json_list, key=lambda x: int(x.split('_eval_json')[0].split('ckpt-')[1]))
