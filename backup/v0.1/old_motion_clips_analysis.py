@@ -37,13 +37,13 @@ def get_video_info_json(video_folder_all=VIDEO_FOLDER_SET):
         frame_shp = frame_sta.shape
         info.append([osp.basename(video_folder_path), (frame_num, frame_end), frame_shp])
 
-    json_file = './temp/video_info.json'
+    json_file = './temp/video_info_old.json'
     with open(json_file, 'w') as f:
         json.dump(info, f)
     return info
 
 
-def devide_long_video_folder(json_file='./temp/video_info.json'):
+def devide_long_video_folder(json_file='./temp/video_info_old.json'):
     try:
         with open(json_file, 'r') as f:
             info = json.load(f)

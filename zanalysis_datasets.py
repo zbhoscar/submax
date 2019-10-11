@@ -7,7 +7,7 @@ import numpy as np
 import json
 import time
 
-VIDEO_FOLDER_SET = basepy.get_2tier_folder_path_list('/absolute/datasets/UCSD_Anomaly_Dataset.v1p2/UCSDped1')
+VIDEO_FOLDER_SET = basepy.get_2tier_folder_path_list('/absolute/datasets/anoma')
 
 VIDEO_FOLDER_PATH = VIDEO_FOLDER_SET[np.random.randint(0, len(VIDEO_FOLDER_SET))]
 # VIDEO_FOLDER_PATH = '/absolute/datasets/anoma/Stealing/Stealing075_x264'
@@ -60,7 +60,7 @@ def devide_long_video_folder(json_file='./temp/video_info.json'):
 
     print('Max anomaly length is %d' % max_anom)
     print('Videos to be divided:')
-    _ = [print('    ' + i[0] + ',    original length' + i[1][1]) for i in need_divide]
+    _ = [print('    ' + i[0] + ', original length: ' + str(i[1][1])) for i in need_divide]
 
     for video_name in need_divide:
         # ('Normal_Videos308_x264', [976504, 976504])
