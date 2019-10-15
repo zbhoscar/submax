@@ -35,6 +35,7 @@ tags.DEFINE_integer('saving_interval', 10, 'every ? epochs to save')
 # step 5 FOR EVALUATION # step 6 FOR ANALYSIS
 # '' or /absolute/tensorflow_models/190912162832_anoma_motion_4training_pyramid_80_56_4region_c3d_npy
 tags.DEFINE_string('ckpt_path_to_eval', '', ' "" for brand new, or model folder path, or model ckpt file path.')
+tags.DEFINE_string('spatial_annotation_path', '/absolute/datasets/anoma_spatial_annotations', 'spatial annotation')
 
 
 def main(_):
@@ -54,7 +55,7 @@ def main(_):
     ckpt_path_to_eval = F.ckpt_path_to_eval or tf_model_path
     _ = evaluation.network_eval(ckpt_path_to_eval, F.set_gpu)
     # step 6
-    _ = analysis.results_evaluate(ckpt_path_to_eval, '')
+    _ = analysis.results_evaluate(ckpt_path_to_eval, '', F.spatial_annotation_path)
 
 
 if __name__ == '__main__':

@@ -14,11 +14,11 @@ def main(_):
     tags = tf.flags
     F = tags.FLAGS
     tags.DEFINE_string('results_json_path',
-                       '/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_120_85_1region_maxtop_256_c3d_npy/191007174553.ckpt-12404_eval_json',
+                       '/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_180_127_4region_maxtop_256_c3d_npy',
                        'model folder path, or model ckpt file path:'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy/190918230353.ckpt-9619_eval_json'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy')
-    tags.DEFINE_string('save_plot', './temp/test_savefig', 'where to save figs, default: "./temp/test_savefig", "" for NO FIG SAVE.')
+    tags.DEFINE_string('save_plot', '', 'where to save figs, default: "./temp/test_savefig", "" for NO FIG SAVE.')
     tags.DEFINE_string('spatial_annotation_path', '/absolute/datasets/anoma_spatial_annotations', 'spatial annotation')
 
     results_evaluate(F.results_json_path, F.save_plot, F.spatial_annotation_path)
