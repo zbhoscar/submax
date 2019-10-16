@@ -8,6 +8,7 @@ import time
 import tensorflow as tf
 from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
+import math
 
 
 def main(_):
@@ -19,12 +20,18 @@ def main(_):
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy/190918230353.ckpt-9619_eval_json'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy')
     tags.DEFINE_string('save_plot', '', 'where to save figs, default: "./temp/test_savefig", "" for NO FIG SAVE.')
-    tags.DEFINE_string('spatial_annotation_path', '/absolute/datasets/anoma_spatial_annotations', 'spatial annotation')
 
-    results_evaluate(F.results_json_path, F.save_plot, F.spatial_annotation_path)
+    results_evaluate(F.results_json_path, F.save_plot)
 
 
-def results_evaluate(results_json_path, save_plot, spatial_annotation_path):
+def results_evaluate(results_json_path, save_plot):
+    if 'anoma' in results_json_path:
+        spatial_annotation_path = '/absolute/datasets/anoma_spatial_annotations'
+    elif 'UCSD' in results_json_path:
+        spatial_annotation_path = '/absolute/datasets/UCSDped2_spatial_annotation'
+    else:
+        raise ValueError('Wrong results_json_path: %s' % results_json_path)
+
     keys_json_path = basepy.get_1tier_file_path_list(results_json_path, suffix='keys.json')[0] \
         if basepy.get_1tier_file_path_list(results_json_path, suffix='keys.json') \
         else basepy.get_1tier_file_path_list(osp.dirname(results_json_path), suffix='keys.json')[0]
@@ -44,9 +51,15 @@ def results_evaluate(results_json_path, save_plot, spatial_annotation_path):
     if '_eval_json' in results_json_path[-10:]:
         results_of_one = analysis_in_one_ckpt(results_json_path,
                                               temporal_annotation_file, inflate, save_plot, spatial_annotation_path)
-        # fpr, tpr, thresholds, auc, all_videos_map, vfpr, vtpr, vthresholds, vauc, videos_order, \
-        # fpr_s, tpr_s, thresholds_s, auc_s, vfpr_s, vtpr_s, vthresholds_s, vauc_s = results_of_one
+        # fpr, tpr, thresholds, auc, all_videos_map,  \
+        # vfpr, vtpr, vthresholds, vauc, videos_order, \
+        # fpr_s, tpr_s, thresholds_s, auc_s, vfpr_s, \
+        # vtpr_s, vthresholds_s, vauc_s, spatial_p, spatial_r, \
+        # spatial_threholds, recover_rate = results_of_one
         print(results_of_one[3], results_of_one[8], results_of_one[13], results_of_one[17], results_json_path)
+        plt.plot(results_of_one[18], results_of_one[19])
+        plt.show()
+        print('wow')
     else:
         _eval_json_list = basepy.get_1tier_file_path_list(results_json_path, suffix='_eval_json')
         _eval_json_list = sorted(_eval_json_list, key=lambda x: int(x.split('_eval_json')[0].split('ckpt-')[1]))
@@ -108,9 +121,11 @@ def analysis_in_one_ckpt(results_json_path, temporal_annotation_file, inflate, s
                      osp.join(save_plot, osp.basename(results_json_path)).split('_eval_json')[0] + '_pr_curve.png',
                      for_title=recover_rate)
 
-    return fpr, tpr, thresholds, auc, all_videos_map, vfpr, vtpr, vthresholds, vauc, videos_order, \
-           fpr_s, tpr_s, thresholds_s, auc_s, vfpr_s, vtpr_s, vthresholds_s, vauc_s, \
-           spatial_p, spatial_r, spatial_threholds, recover_rate
+    return fpr, tpr, thresholds, auc, all_videos_map, \
+           vfpr, vtpr, vthresholds, vauc, videos_order, \
+           fpr_s, tpr_s, thresholds_s, auc_s, vfpr_s, \
+           vtpr_s, vthresholds_s, vauc_s, spatial_p, spatial_r, \
+           spatial_threholds, recover_rate
 
 
 def save_one_fig(x, y, title_str, xlabel_str, ylabel_str, save_file_path, for_title=''):
@@ -123,7 +138,8 @@ def save_one_fig(x, y, title_str, xlabel_str, ylabel_str, save_file_path, for_ti
     plt.close()
 
 
-def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_annotation_file, inflate, iou_threshold=0.10):
+def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_annotation_file, inflate,
+                         iou_threshold=0.10):
     annotation_in_all = basepy.read_txt_lines2list(temporal_annotation_file, '  ')
     image_size = (240, 320) if 'Anomaly-Detection-Dataset' in temporal_annotation_file else (240, 360)
     wei_shu = 5 if 'Anomaly-Detection-Dataset' in temporal_annotation_file else 3
@@ -134,7 +150,8 @@ def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_an
         in_one_video = {}
         for j in index_list:
             if j % inflate == 0:
-                spatial_annotation_txt = osp.join(annotation_folder_path, video_name_temp, str(j).zfill(wei_shu) + '.txt')
+                spatial_annotation_txt = osp.join(annotation_folder_path, video_name_temp,
+                                                  str(j).zfill(wei_shu) + '.txt')
                 if not osp.exists(spatial_annotation_txt):
                     raise ValueError('Not Exists: annotation txt path %s' % spatial_annotation_txt)
                 in_one_video[j] = [[yoloLine2Shape(image_size, k[1], k[2], k[3], k[4]), 0] for k in
@@ -142,16 +159,22 @@ def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_an
                 all_annotation_num = all_annotation_num + len(in_one_video[j])
         spatial_annotation[video_name_temp] = in_one_video
 
-    spatial_groud_truth, covered_num = get_spatial_groud_truth(results_all_in_one, spatial_annotation, iou_threshold=iou_threshold)
+    spatial_groud_truth, covered_num = get_spatial_groud_truth(results_all_in_one, spatial_annotation,
+                                                               iou_threshold=iou_threshold)
     spatial_anomaly_score = [i[-1] for i in results_all_in_one]
     p, r, thresholds = metrics.precision_recall_curve(spatial_groud_truth, spatial_anomaly_score)
 
-    return p, r, thresholds, covered_num/all_annotation_num
+    return p, r, thresholds, covered_num / all_annotation_num
 
 
 def get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=2, iou_threshold=0.1):
     spatial_groud_truth = [0] * len(results_all_in_one)
-    for j, [_, video_name, frame_index, _, a1_c, a1_r, a1_w, a1_h, a2_c, a2_r, a2_w, a2_h, _, _, _] in enumerate(results_all_in_one):
+    for j, one in enumerate(results_all_in_one):
+        try:
+            _, video_name, frame_index, _, a1_c, a1_r, a1_w, a1_h, a2_c, a2_r, a2_w, a2_h, _, _, _ = one
+        except ValueError:
+            _, video_name, frame_index, _, a1_c, a1_r, a1_w, a1_h, _, _, _ = one
+            a2_c, a2_r, a2_w, a2_h = a1_c, a1_r, a1_w, a1_h
         if scale_id == 2:
             area = (int(a2_c), int(a2_r), int(a2_c + a2_w), int(a2_r + a2_h))
         elif scale_id == 1:
@@ -201,9 +224,9 @@ def convert_list2dict(results_list, select=2):
     new_dict = {}
     for _, video_name, frame_index, _, a1_c, a1_r, a1_w, a1_h, a2_c, a2_r, a2_w, a2_h, _, _, _ in results_list:
         if select == 2:
-            area = (a2_c, a2_r, a2_c+a2_w, a2_r+a2_h)
+            area = (a2_c, a2_r, a2_c + a2_w, a2_r + a2_h)
         elif select == 1:
-            area = (a1_c, a1_r, a1_c+a1_w, a1_r+a1_h)
+            area = (a1_c, a1_r, a1_c + a1_w, a1_r + a1_h)
         else:
             raise ValueError('Wrong select in results %d' % select)
 
@@ -276,20 +299,31 @@ def get_temporal_duration(json_file, inflate, temporal_annotation_file):
         if frame_index % inflate == 0:
             index_deflated = int(frame_index // inflate)
             temporal_score_select[index_deflated] = max(temporal_score_select[index_deflated], anomaly_score)
-    temporal_score_select_smooth = list(savgol_filter(temporal_score_select, min(len(temporal_score_select), 11), 0))
+
+    window = [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.3, 0.4, 0.5, 0.4, 0.3, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1]
+    window_length = min(2 * int((len(temporal_score) - 1) / 2 / 2) + 1, 19)
+    window_reform = window[int((len(window) - 1) / 2 - (window_length - 1) / 2):
+                           int((len(window) - 1) / 2 - (window_length - 1) / 2) + window_length]
+    temporal_score_select_smooth = np.convolve(temporal_score_select, window_reform, mode='same')
+    temporal_score_select_smooth = np.minimum(temporal_score_select_smooth, 0.9999)
+    # temporal_score_select_smooth = temporal_score_select
     info_smooth = info
     for j, one_clip in enumerate(info_smooth):
         index = int(one_clip[2] // inflate)
         if one_clip[-1] == 0:
-            one_clip[-1] = min(temporal_score_select_smooth[index] / 100, 0.995)
+            one_clip[-1] = temporal_score_select_smooth[index] / 100
         elif temporal_score_select[index] == 0:
-            one_clip[-1] = min(temporal_score_select_smooth[index], 0.995)
+            one_clip[-1] = temporal_score_select_smooth[index]
         else:
             # if temporal_score_select[index] == 0 :
             #     print(json_file, index)
-            one_clip[-1] = min((one_clip[-1] / temporal_score_select[index]) * temporal_score_select_smooth[index], 0.995)
+            one_clip[-1] = (one_clip[-1] / temporal_score_select[index]) * temporal_score_select_smooth[index]
 
     return video_name, len(temporal_score), temporal_score, temporal_score_select_smooth, temporal_truth, info_smooth
+
+
+def gaussian(x, u, sigma):
+    return np.exp(-(x - u) ** 2 / (2 * sigma ** 2)) / (math.sqrt(2 * math.pi) * sigma)
 
 
 def yoloLine2Shape(image_size, xcen, ycen, w, h):
