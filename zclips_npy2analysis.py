@@ -14,10 +14,10 @@ tags = tf.flags
 F = tags.FLAGS
 # step 3 DATA REFORM
 tags.DEFINE_string('npy_file_path',
-                   '/absolute/datasets/anoma_motion_pyramid_120_85_c3d_npy',
+                   '/absolute/datasets/UCSDped2_reform_motion_pyramid_80_56_c3d_npy',
                    'npy file folder to be reformed.')
 tags.DEFINE_string('testing_list',
-                   '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
+                   '/absolute/datasets/UCSDped2_split_list/10_fold_001/v09_test.txt',
                    'default to UCFCrime, else specific to UCSD.')
 tags.DEFINE_boolean('multiprocessing', True, 'choose multiprocessing or not.')
 tags.DEFINE_integer('var0', 0, 'choose NPY_FILE_FOLDER, SEGMENT_NUM.')
@@ -28,7 +28,7 @@ tags.DEFINE_integer('batch_size', 64, 'batch size.')
 tags.DEFINE_integer('epoch_num', 1202, 'epoch number.')
 tags.DEFINE_float('learning_rate_base', 0.0008, 'learning rate base')
 tags.DEFINE_float('moving_average_decay', 0.999, 'moving average decay')
-tags.DEFINE_float('regularization_scale', 0.00003, 'regularization scale')
+tags.DEFINE_float('regularization_scale', 0.0001, 'regularization scale')
 tags.DEFINE_string('fusion', 'standard', 'fusion ways in feature extraction')
 tags.DEFINE_string('lasting', '', 'a TensorFlow model path for lasting')
 tags.DEFINE_integer('saving_interval', 10, 'every ? epochs to save')

@@ -9,17 +9,18 @@ import tensorflow as tf
 from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 import math
+import cv2
 
 
 def main(_):
     tags = tf.flags
     F = tags.FLAGS
     tags.DEFINE_string('results_json_path',
-                       '/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_180_127_4region_maxtop_256_c3d_npy',
+                       '/absolute/tensorflow_models/191017225848_UCSDped2_reform_motion_reformed_pyramid_80_56_4region_segment_32_c3d_npy/191017225848.ckpt-47_eval_json',
                        'model folder path, or model ckpt file path:'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy/190918230353.ckpt-9619_eval_json'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy')
-    tags.DEFINE_string('save_plot', '', 'where to save figs, default: "./temp/test_savefig", "" for NO FIG SAVE.')
+    tags.DEFINE_string('save_plot', "./temp/test_savefig", 'where to save figs, default: "./temp/test_savefig", "" for NO FIG SAVE.')
 
     results_evaluate(F.results_json_path, F.save_plot)
 
@@ -55,18 +56,25 @@ def results_evaluate(results_json_path, save_plot):
         # vfpr, vtpr, vthresholds, vauc, videos_order, \
         # fpr_s, tpr_s, thresholds_s, auc_s, vfpr_s, \
         # vtpr_s, vthresholds_s, vauc_s, spatial_p, spatial_r, \
-        # spatial_threholds, recover_rate = results_of_one
+        # spatial_threholds, recover_rate, info = results_of_one
         print(results_of_one[3], results_of_one[8], results_of_one[13], results_of_one[17], results_json_path)
-        plt.plot(results_of_one[18], results_of_one[19])
+        print(metrics.auc(results_of_one[19], results_of_one[18]), results_of_one[21])
+        rr = results_of_one[21]
+        r = [rr] + [i* rr for i in results_of_one[19]]
+        p = [0] + [j for j in results_of_one[18]]
+        plt.plot(r, p)
         plt.show()
-        print('wow')
+        np.savetxt('ours_fpr.txt', results_of_one[10])
+        np.savetxt('ours_tpr.txt', results_of_one[11])
+        np.savetxt('ours_r.txt', np.array(r))
+        np.savetxt('ours_p.txt', np.array(p))
     else:
         _eval_json_list = basepy.get_1tier_file_path_list(results_json_path, suffix='_eval_json')
         _eval_json_list = sorted(_eval_json_list, key=lambda x: int(x.split('_eval_json')[0].split('ckpt-')[1]))
         results_all_in_one = [
             analysis_in_one_ckpt(i, temporal_annotation_file, inflate, save_plot, spatial_annotation_path)
             for i in _eval_json_list]
-        _ = [print(i[3], i[8], i[13], i[17], osp.basename(_eval_json_list[j]))
+        _ = [print(i[3], i[8], i[13], i[17], metrics.auc(i[19], i[18]), i[21], osp.basename(_eval_json_list[j]))
              for j, i in enumerate(results_all_in_one)]
         print('RESULTS_JSON_PATH'.ljust(25), results_json_path)
 
@@ -74,10 +82,11 @@ def results_evaluate(results_json_path, save_plot):
 
 
 def analysis_in_one_ckpt(results_json_path, temporal_annotation_file, inflate, save_plot, annotation_folder_path):
+    path_if_save = osp.join(save_plot, osp.basename(osp.dirname(results_json_path)), osp.basename(results_json_path))
     # video_name, deflated_length, temporal_score, temporal_truth
-    video_temporal_results, info_smooth_all_in_one = get_temporal_duration_in_folder(
+    video_temporal_results, info_all = get_temporal_duration_in_folder(
         results_json_path, temporal_annotation_file, inflate, suffix='.json',
-        score_and_truth_fig_save_path=osp.join(save_plot, osp.basename(results_json_path)) if save_plot else None)
+        score_and_truth_fig_save_path= path_if_save if save_plot else None)
     all_frames_score, all_frames_score_select, all_frames_truth, all_videos_map = [], [], [], []
     videos_score, video_score_select, videos_truth, videos_order = [], [], [], []
     for video_name, deflated_length, temporal_score, temporal_score_select, temporal_truth in video_temporal_results:
@@ -102,30 +111,33 @@ def analysis_in_one_ckpt(results_json_path, temporal_annotation_file, inflate, s
     vauc_s = metrics.auc(vfpr_s, vtpr_s)
 
     spatial_p, spatial_r, spatial_threholds, recover_rate = \
-        get_spatial_pr_curve(info_smooth_all_in_one, annotation_folder_path, temporal_annotation_file, inflate)
+        get_spatial_pr_curve(info_all, annotation_folder_path, temporal_annotation_file, inflate)
 
     if save_plot:
         save_one_fig(fpr, tpr, 'AUC = %f', 'False Positive Rate', 'True Positive Rate',
-                     osp.join(save_plot, osp.basename(results_json_path)).split('_eval_json')[0] + '_orig.png',
-                     for_title=auc)
+                     path_if_save.split('_eval_json')[0] + '_orig.png', for_title=auc)
         save_one_fig(vfpr, vtpr, 'AUC = %f', 'False Positive Rate', 'True Positive Rate',
-                     osp.join(save_plot, osp.basename(results_json_path)).split('_eval_json')[0] + '_video.png',
-                     for_title=vauc)
+                     path_if_save.split('_eval_json')[0] + '_video.png', for_title=vauc)
         save_one_fig(fpr_s, tpr_s, 'AUC = %f', 'False Positive Rate', 'True Positive Rate',
-                     osp.join(save_plot, osp.basename(results_json_path)).split('_eval_json')[0] + '_smooth.png',
-                     for_title=auc_s)
+                     path_if_save.split('_eval_json')[0] + '_smooth.png', for_title=auc_s)
         save_one_fig(vfpr_s, vtpr_s, 'AUC = %f', 'False Positive Rate', 'True Positive Rate',
-                     osp.join(save_plot, osp.basename(results_json_path)).split('_eval_json')[0] + '_video_smooth.png',
-                     for_title=vauc_s)
+                     path_if_save.split('_eval_json')[0] + '_video_smooth.png', for_title=vauc_s)
         save_one_fig(spatial_r, spatial_p, 'RECOVER = %f', 'Recall', 'Precision',
-                     osp.join(save_plot, osp.basename(results_json_path)).split('_eval_json')[0] + '_pr_curve.png',
-                     for_title=recover_rate)
+                     path_if_save.split('_eval_json')[0] + '_pr_curve.png', for_title=recover_rate)
+        if 'ucsd' in results_json_path.lower():
+            data_path = '/absolute/datasets/UCSDped2_reform'
+        elif 'anoma' in results_json_path.lower():
+            data_path = '/absolute/datasets/anoma'
+        else:
+            raise ValueError('Wrong data_path %s' % results_json_path)
+
+        draw_spatial(info_all, data_path=data_path, save_path=path_if_save)
 
     return fpr, tpr, thresholds, auc, all_videos_map, \
            vfpr, vtpr, vthresholds, vauc, videos_order, \
            fpr_s, tpr_s, thresholds_s, auc_s, vfpr_s, \
            vtpr_s, vthresholds_s, vauc_s, spatial_p, spatial_r, \
-           spatial_threholds, recover_rate
+           spatial_threholds, recover_rate, info_all
 
 
 def save_one_fig(x, y, title_str, xlabel_str, ylabel_str, save_file_path, for_title=''):
@@ -139,7 +151,7 @@ def save_one_fig(x, y, title_str, xlabel_str, ylabel_str, save_file_path, for_ti
 
 
 def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_annotation_file, inflate,
-                         iou_threshold=0.10):
+                         iou_threshold=0.14):
     annotation_in_all = basepy.read_txt_lines2list(temporal_annotation_file, '  ')
     image_size = (240, 320) if 'Anomaly-Detection-Dataset' in temporal_annotation_file else (240, 360)
     wei_shu = 5 if 'Anomaly-Detection-Dataset' in temporal_annotation_file else 3
@@ -159,7 +171,7 @@ def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_an
                 all_annotation_num = all_annotation_num + len(in_one_video[j])
         spatial_annotation[video_name_temp] = in_one_video
 
-    spatial_groud_truth, covered_num = get_spatial_groud_truth(results_all_in_one, spatial_annotation,
+    spatial_groud_truth, covered_num = get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=1,
                                                                iou_threshold=iou_threshold)
     spatial_anomaly_score = [i[-1] for i in results_all_in_one]
     p, r, thresholds = metrics.precision_recall_curve(spatial_groud_truth, spatial_anomaly_score)
@@ -167,7 +179,7 @@ def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_an
     return p, r, thresholds, covered_num / all_annotation_num
 
 
-def get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=2, iou_threshold=0.1):
+def get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=2, iou_threshold=0.5):
     spatial_groud_truth = [0] * len(results_all_in_one)
     for j, one in enumerate(results_all_in_one):
         try:
@@ -204,20 +216,22 @@ def get_temporal_duration_in_folder(results_json_path, temporal_annotation_file,
                                     suffix='.json', score_and_truth_fig_save_path=None):
     json_file_list = basepy.get_1tier_file_path_list(results_json_path, suffix=suffix)
     videos_temporal_results = []
-    info_smooth_all_in_one = []
+    info_all_in_one = []
     if score_and_truth_fig_save_path:
         print('drawing to %s...' % score_and_truth_fig_save_path)
 
     for json_file in json_file_list:
-        video_name, deflated_length, temporal_score, temporal_score_select, temporal_truth, info_smooth = \
+        video_name, deflated_length, temporal_score, temporal_score_select, temporal_truth, info = \
             get_temporal_duration(json_file, inflate, temporal_annotation_file)
         if score_and_truth_fig_save_path:
-            show_something(score_and_truth_fig_save_path, deflated_length, inflate,
+            show_something(osp.join(score_and_truth_fig_save_path, 'temporal_orig'), deflated_length, inflate,
+                           temporal_score, temporal_truth, video_name)
+            show_something(osp.join(score_and_truth_fig_save_path, 'temporal_select'), deflated_length, inflate,
                            temporal_score_select, temporal_truth, video_name)
         videos_temporal_results.append([video_name, deflated_length,
                                         temporal_score, temporal_score_select, temporal_truth])
-        info_smooth_all_in_one.extend(info_smooth)
-    return videos_temporal_results, info_smooth_all_in_one
+        info_all_in_one.extend(info)
+    return videos_temporal_results, info_all_in_one
 
 
 def convert_list2dict(results_list, select=2):
@@ -300,24 +314,23 @@ def get_temporal_duration(json_file, inflate, temporal_annotation_file):
             index_deflated = int(frame_index // inflate)
             temporal_score_select[index_deflated] = max(temporal_score_select[index_deflated], anomaly_score)
 
-    window = [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.3, 0.4, 0.5, 0.4, 0.3, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1]
-    window_length = min(2 * int((len(temporal_score) - 1) / 2 / 2) + 1, 19)
-    window_reform = window[int((len(window) - 1) / 2 - (window_length - 1) / 2):
-                           int((len(window) - 1) / 2 - (window_length - 1) / 2) + window_length]
-    temporal_score_select_smooth = np.convolve(temporal_score_select, window_reform, mode='same')
+    # window = [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.3, 0.4, 0.5, 0.4, 0.3, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1]
+    window_length = min(2 * int((len(temporal_score) - 1) / 2 / 2) + 1, 11)
+    window = [1/window_length] * window_length
+    temporal_score_select_smooth = np.convolve(temporal_score_select, window, mode='same')
     temporal_score_select_smooth = np.minimum(temporal_score_select_smooth, 0.9999)
     # temporal_score_select_smooth = temporal_score_select
     info_smooth = info
-    for j, one_clip in enumerate(info_smooth):
-        index = int(one_clip[2] // inflate)
-        if one_clip[-1] == 0:
-            one_clip[-1] = temporal_score_select_smooth[index] / 100
-        elif temporal_score_select[index] == 0:
-            one_clip[-1] = temporal_score_select_smooth[index]
-        else:
-            # if temporal_score_select[index] == 0 :
-            #     print(json_file, index)
-            one_clip[-1] = (one_clip[-1] / temporal_score_select[index]) * temporal_score_select_smooth[index]
+    # for j, one_clip in enumerate(info_smooth):
+    #     index = int(one_clip[2] // inflate)
+    #     if one_clip[-1] == 0:
+    #         one_clip[-1] = temporal_score_select_smooth[index] / 100
+    #     elif temporal_score_select[index] == 0:
+    #         one_clip[-1] = temporal_score_select_smooth[index]
+    #     else:
+    #         # if temporal_score_select[index] == 0 :
+    #         #     print(json_file, index)
+    #         one_clip[-1] = (one_clip[-1] / temporal_score_select[index]) * temporal_score_select_smooth[index]
 
     return video_name, len(temporal_score), temporal_score, temporal_score_select_smooth, temporal_truth, info_smooth
 
@@ -368,6 +381,43 @@ def compute_iou(rec1, rec2):
     else:
         intersect = (right_line - left_line) * (bottom_line - top_line)
         return (intersect / (sum_area - intersect)) * 1.0
+
+
+def draw_spatial(info_all, data_path='/absolute/datasets/UCSDped2_reform', save_path='./temp/UCSDped2_spatial', select_id=2):
+    suffix = '.tif' if 'ucsd' in data_path.lower() else '.jpg'
+    inflate = 8 if 'ucsd' in data_path.lower() else 16
+    for one_info in info_all:
+        class_name, video_name, frame_index, _, \
+        a1_c, a1_r, a1_w, a1_h, a2_c, a2_r, a2_w, a2_h, \
+        _, _, anomaly_score = one_info
+
+        if select_id == 2:
+            area = (a2_c, a2_r, a2_c + a2_w, a2_r + a2_h)
+        elif select_id == 1:
+            area = (a1_c, a1_r, a1_c + a1_w, a1_r + a1_h)
+        else:
+            raise ValueError('Wrong select in results %d' % select_id)
+        frame_index, area = int(frame_index), [int(i) for i in area]
+
+        video_orig_path = osp.join(data_path,class_name,video_name)
+        # print(video_orig_path)
+        frame_sorted = sorted(basepy.get_1tier_file_path_list(video_orig_path, suffix=suffix),
+                              key=lambda x: int(osp.basename(x).split('.')[0]))
+
+        which_frame = frame_sorted[frame_index+int(inflate/2)]
+        save_frame = osp.join(save_path, video_name, osp.basename(which_frame))
+        # save_frame = which_frame.replace(data_path,save_path)
+        _ = basepy.check_or_create_path(osp.dirname(save_frame))
+
+        img = cv2.imread(save_frame) if osp.isfile(save_frame) else cv2.imread(which_frame)
+
+        cv2.rectangle(img, (area[0],area[1]), (area[2],area[3]), (int(255*anomaly_score),0,0),1)
+        font = cv2.FONT_HERSHEY_PLAIN
+        text = '%.4f' % anomaly_score
+        cv2.putText(img,text,(area[0],area[1]),font,1,(int(255*anomaly_score),0,0),1)
+        cv2.imwrite(save_frame, img)
+
+
 
 
 if __name__ == '__main__':
