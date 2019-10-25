@@ -16,11 +16,11 @@ def main(_):
     tags = tf.flags
     F = tags.FLAGS
     tags.DEFINE_string('results_json_path',
-                       '/absolute/tensorflow_models/191017225848_UCSDped2_reform_motion_reformed_pyramid_80_56_4region_segment_32_c3d_npy/191017225848.ckpt-47_eval_json',
+                       '/home/zbh/Desktop/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_120_85_1region_maxtop_256_c3d_npy/191007174553.ckpt-14302_eval_json',
                        'model folder path, or model ckpt file path:'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy/190918230353.ckpt-9619_eval_json'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy')
-    tags.DEFINE_string('save_plot', "./temp/test_savefig", 'where to save figs, default: "./temp/test_savefig", "" for NO FIG SAVE.')
+    tags.DEFINE_string('save_plot', '', 'where to save figs, default: "./temp/test_savefig", "" for NO FIG SAVE.')
 
     results_evaluate(F.results_json_path, F.save_plot)
 
@@ -68,6 +68,13 @@ def results_evaluate(results_json_path, save_plot):
         np.savetxt('ours_tpr.txt', results_of_one[11])
         np.savetxt('ours_r.txt', np.array(r))
         np.savetxt('ours_p.txt', np.array(p))
+        a = 0
+        n = 0
+        for i in results_of_one[-1]:
+            if 'normal' in i[1].lower() and i[-1] > 0.5:
+                a += 1
+            elif 'normal' in i[1].lower() and i[-1] <= 0.5:
+                n += 1
     else:
         _eval_json_list = basepy.get_1tier_file_path_list(results_json_path, suffix='_eval_json')
         _eval_json_list = sorted(_eval_json_list, key=lambda x: int(x.split('_eval_json')[0].split('ckpt-')[1]))
@@ -320,7 +327,7 @@ def get_temporal_duration(json_file, inflate, temporal_annotation_file):
     temporal_score_select_smooth = np.convolve(temporal_score_select, window, mode='same')
     temporal_score_select_smooth = np.minimum(temporal_score_select_smooth, 0.9999)
     # temporal_score_select_smooth = temporal_score_select
-    info_smooth = info
+    # info_smooth = info
     # for j, one_clip in enumerate(info_smooth):
     #     index = int(one_clip[2] // inflate)
     #     if one_clip[-1] == 0:
@@ -331,8 +338,9 @@ def get_temporal_duration(json_file, inflate, temporal_annotation_file):
     #         # if temporal_score_select[index] == 0 :
     #         #     print(json_file, index)
     #         one_clip[-1] = (one_clip[-1] / temporal_score_select[index]) * temporal_score_select_smooth[index]
+    # info_smooth = sorted(info_smooth, key=lambda x: x[-3], reverse=True)[:select_num]
 
-    return video_name, len(temporal_score), temporal_score, temporal_score_select_smooth, temporal_truth, info_smooth
+    return video_name, len(temporal_score), temporal_score, temporal_score_select_smooth, temporal_truth, info
 
 
 def gaussian(x, u, sigma):
