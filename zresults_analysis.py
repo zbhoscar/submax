@@ -321,12 +321,10 @@ def get_temporal_duration(json_file, inflate, temporal_annotation_file):
             index_deflated = int(frame_index // inflate)
             temporal_score_select[index_deflated] = max(temporal_score_select[index_deflated], anomaly_score)
 
-    # window = [0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.3, 0.4, 0.5, 0.4, 0.3, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1]
-    window_length = min(2 * int((len(temporal_score) - 1) / 2 / 2) + 1, 11)
+    window_length = min(2 * int((len(temporal_score) - 1) / 2 / 2) + 1, 9)
     window = [1/window_length] * window_length
     temporal_score_select_smooth = np.convolve(temporal_score_select, window, mode='same')
     temporal_score_select_smooth = np.minimum(temporal_score_select_smooth, 0.9999)
-    # temporal_score_select_smooth = temporal_score_select
     # info_smooth = info
     # for j, one_clip in enumerate(info_smooth):
     #     index = int(one_clip[2] // inflate)
@@ -426,6 +424,8 @@ def draw_spatial(info_all, data_path='/absolute/datasets/UCSDped2_reform', save_
         cv2.imwrite(save_frame, img)
 
 
+def tsne(class1, clase2):
+    pass
 
 
 if __name__ == '__main__':

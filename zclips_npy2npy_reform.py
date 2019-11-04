@@ -20,7 +20,7 @@ def main(_):
                        'npy file folder to be reformed.')
     tags.DEFINE_string('testing_list',
                        '/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos.txt',
-                       'soru.')
+                       'testing txt list, temporal annotation.')
     tags.DEFINE_boolean('multiprocessing', True, 'choose multiprocessing or not.')
     tags.DEFINE_integer('var0', 0, 'choose NPY_FILE_FOLDER, SEGMENT_NUM, TEST_FILE.')
     tags.DEFINE_integer('var1', 0, 'choose MULTISCALE, MULTIREGION.')
