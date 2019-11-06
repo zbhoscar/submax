@@ -4,9 +4,9 @@ import os.path as osp
 import numpy as np
 import zdefault_dict
 from sklearn import metrics
+from sklearn import manifold
 import time
 import tensorflow as tf
-from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 import math
 import cv2
@@ -346,7 +346,7 @@ def gaussian(x, u, sigma):
 
 
 def yoloLine2Shape(image_size, xcen, ycen, w, h):
-    xcen, ycen, w, h = float(xcen), float(ycen), float(w), float(h)
+    # xcen, ycen, w, h = float(xcen), float(ycen), float(w), float(h)
     xmin = max(float(xcen) - float(w) / 2, 0)
     xmax = min(float(xcen) + float(w) / 2, 1)
     ymin = max(float(ycen) - float(h) / 2, 0)
@@ -424,8 +424,108 @@ def draw_spatial(info_all, data_path='/absolute/datasets/UCSDped2_reform', save_
         cv2.imwrite(save_frame, img)
 
 
-def tsne(class1, clase2):
-    pass
+def tsne(class_norm, clase_anom, title='tsne of anomalous and normal features'):
+    in_one = np.vstack((class_norm, clase_anom))
+    class1_num = len(class_norm)
+    tsne = manifold.TSNE(n_components=2, )
+    X_tsne = tsne.fit_transform(in_one)
+    x_min, x_max = X_tsne.min(0), X_tsne.max(0)
+    X_norm = (X_tsne - x_min) / (x_max - x_min)
+    plt.figure(title)
+    ax = plt.gca()
+    # ax.set_xlabel('x')
+    # ax.set_ylabel('y')
+    ax.scatter(X_norm[class1_num:, 0], X_norm[class1_num:, 1], c='r', alpha=0.5)
+    ax.scatter(X_norm[:class1_num, 0], X_norm[:class1_num, 1], c='b', alpha=0.5)
+    plt.show()
+
+
+
+# def tsne3(class_norm, clase_anom):
+#     in_one = np.vstack((class_norm, clase_anom))
+#     class1_num = len(class_norm)
+#     tsne = manifold.TSNE(n_components=3)
+#     X_tsne = tsne.fit_transform(in_one)
+#     x_min, x_max = X_tsne.min(0), X_tsne.max(0)
+#     X_norm = (X_tsne - x_min) / (x_max - x_min)
+#     plt.figure('tsne of anomalous and normal features')
+#     ax = plt.gca()
+#     # ax.set_xlabel('x')
+#     # ax.set_ylabel('y')
+#     ax.scatter(X_norm[:class1_num, 0], X_norm[:class1_num, 1], X_norm[:class1_num, 2], c='b')
+#     ax.scatter(X_norm[class1_num:, 0], X_norm[class1_num:, 1], X_norm[class1_num:, 2], c='r')
+#     ax.view_init(4, -72)
+#     plt.show()
+
+
+
+def collect_features(temporal_annotation_file, original_c3d_path, event_proposal_c3d_path, spatial_annotation_path, max_num=None):
+    annotation_in_all = basepy.read_txt_lines2list(temporal_annotation_file)
+    original_c3d_anomaly_all, original_c3d_normal_all, event_proposal_c3d_anomaly_all, event_proposal_c3d_normal_all = [],[],[],[]
+    for each_line in annotation_in_all:
+        original_c3d_anomaly, original_c3d_normal, event_proposal_c3d_anomaly, event_proposal_c3d_normal = \
+            collect_each_video(each_line,original_c3d_path, event_proposal_c3d_path, spatial_annotation_path, max_num=max_num)
+        original_c3d_anomaly_all.extend(original_c3d_anomaly)
+        original_c3d_normal_all.extend(original_c3d_normal)
+        event_proposal_c3d_anomaly_all.extend(event_proposal_c3d_anomaly)
+        event_proposal_c3d_normal_all.extend(event_proposal_c3d_normal)
+
+    return np.array(original_c3d_anomaly_all), np.array(original_c3d_normal_all), \
+           np.array(event_proposal_c3d_anomaly_all), np.array(event_proposal_c3d_normal_all)
+
+
+def collect_each_video(each_line, original_c3d_path, event_proposal_c3d_path, spatial_annotation_path, max_num=None):
+    from random import choice
+    print(each_line[0])
+    video_name, video_class, start1, final1, start2, final2 = each_line[0].split('  ')
+    start1, final1, start2, final2 = int(start1), int(final1), int(start2), int(final2)
+
+    original_c3d_npy_path = osp.join(original_c3d_path, video_class+"@"+video_name+".npy")
+    if not osp.exists(original_c3d_npy_path):
+        raise ValueError('No existing %s' % original_c3d_npy_path)
+    original_c3d_npy = np.load(original_c3d_npy_path)
+    np.random.shuffle(original_c3d_npy)
+    original_c3d_npy = original_c3d_npy[:max_num]
+
+    anomaly_index= [i[-8] for i in original_c3d_npy if start1 <= i[-8] <= final1 or start2 <= i[-8] <= final2]
+    normal_index = [i[-8] for i in original_c3d_npy if not start1 <= i[-8] <=final1 and not start2 <= i[-8] <=final2]
+
+    original_c3d_anomaly= [i[:4096] for i in original_c3d_npy if i[-8] in anomaly_index]
+    original_c3d_normal = [i[:4096] for i in original_c3d_npy if i[-8] in normal_index]
+
+    event_proposal_c3d_npy_path = osp.join(event_proposal_c3d_path, video_class+"@"+video_name+".npy")
+    if not osp.exists(event_proposal_c3d_npy_path):
+        raise ValueError('No existing %s' % event_proposal_c3d_npy_path)
+    event_proposal_c3d_npy = np.load(event_proposal_c3d_npy_path)
+
+    video_spatial_annotation_path = osp.join(spatial_annotation_path, video_name)
+    # if not osp.exists(video_spatial_annotation_path):
+    #     raise ValueError('No existing %s' % video_spatial_annotation_path)
+
+    event_proposal_c3d_anomaly= [get_iou_one([j for j in event_proposal_c3d_npy if j[-12] == i], video_spatial_annotation_path) for i in anomaly_index]
+    event_proposal_c3d_anomaly = [j for j in event_proposal_c3d_anomaly if j is not False]
+    event_proposal_c3d_normal = [choice([j[:4096] for j in event_proposal_c3d_npy if j[-12] == i]) for i in normal_index]
+
+    return original_c3d_anomaly, original_c3d_normal, event_proposal_c3d_anomaly, event_proposal_c3d_normal
+
+
+def get_iou_one(c3d_list_in_one_frame, video_spatial_annotation_path):
+    image_size, wei_shu = ((240, 360), 3) if 'ucsdped2' in video_spatial_annotation_path.lower() else ((240, 320),5)
+    iou_list_in_one_frames, frame_index = [], c3d_list_in_one_frame[0][-12]
+    spatial_annotation_txt = osp.join(video_spatial_annotation_path, str(int(frame_index+1)).zfill(wei_shu) + '.txt')
+    spatial_annotations = [yoloLine2Shape(image_size, k[1], k[2], k[3], k[4]) for k in
+                           basepy.read_txt_lines2list(spatial_annotation_txt, ' ')]
+    for i in c3d_list_in_one_frame:
+        event_proposal = (int(i[-10]), int(i[-9]), int(i[-10] + i[-9]), int(i[-9] + i[-7]))
+        iou_list_in_one_frames.append(max([compute_iou(event_proposal, bx) for bx in spatial_annotations]))
+
+    print(max(iou_list_in_one_frames))
+    if max(iou_list_in_one_frames) > 0.1:
+        select_one = iou_list_in_one_frames.index(max(iou_list_in_one_frames))
+        # return (c3d_list_in_one_frame[select_one][:4096] + c3d_list_in_one_frame[select_one][4096:8192])/2
+        return np.maximum(c3d_list_in_one_frame[select_one][:4096], c3d_list_in_one_frame[select_one][4096:8192])
+    else:
+        return False
 
 
 if __name__ == '__main__':
