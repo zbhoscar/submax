@@ -479,6 +479,7 @@ def collect_each_video(each_line, original_c3d_path, event_proposal_c3d_path, sp
     print(each_line[0])
     video_name, video_class, start1, final1, start2, final2 = each_line[0].split('  ')
     start1, final1, start2, final2 = int(start1), int(final1), int(start2), int(final2)
+    video_name, video_class = (video_name.replace('.mp4',''), video_class.replace('Normal','normal_test')) if '.mp4' in video_name else (video_name, video_class)
 
     original_c3d_npy_path = osp.join(original_c3d_path, video_class+"@"+video_name+".npy")
     if not osp.exists(original_c3d_npy_path):
@@ -512,7 +513,7 @@ def collect_each_video(each_line, original_c3d_path, event_proposal_c3d_path, sp
 def get_iou_one(c3d_list_in_one_frame, video_spatial_annotation_path):
     image_size, wei_shu = ((240, 360), 3) if 'ucsdped2' in video_spatial_annotation_path.lower() else ((240, 320),5)
     iou_list_in_one_frames, frame_index = [], c3d_list_in_one_frame[0][-12]
-    spatial_annotation_txt = osp.join(video_spatial_annotation_path, str(int(frame_index+1)).zfill(wei_shu) + '.txt')
+    spatial_annotation_txt = osp.join(video_spatial_annotation_path, str(int(frame_index)).zfill(wei_shu) + '.txt')
     spatial_annotations = [yoloLine2Shape(image_size, k[1], k[2], k[3], k[4]) for k in
                            basepy.read_txt_lines2list(spatial_annotation_txt, ' ')]
     for i in c3d_list_in_one_frame:
