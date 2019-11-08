@@ -533,7 +533,7 @@ def recall_iou_all(temporal_annotation_file, video_spatial_annotation_path, even
     annotation_in_all = basepy.read_txt_lines2list(temporal_annotation_file)
     multi_all, single_all, frame_all = [], [], []
     for each_line in annotation_in_all:
-        multi_region, one_region, iou_frame = recall_iou_all(each_line, video_spatial_annotation_path, event_proposal_json_path)
+        multi_region, one_region, iou_frame = recall_iou_video(each_line, video_spatial_annotation_path, event_proposal_json_path)
         multi_all.extend(multi_region)
         single_all.extend(one_region)
         frame_all.extend(iou_frame)
@@ -560,15 +560,16 @@ def recall_iou_video(each_line, video_spatial_annotation_path, event_proposal_js
                                basepy.read_txt_lines2list(spatial_annotation_txt, ' ')]
 
         ep_in_frame = [i for i in info if i[2] == ep_index]
-        ep_iou_on_at = [[compute_iou((int(i[-9]), int(i[-8]), int(i[-9] + i[-7]), int(i[-8] + i[-6])), j) for i in ep_in_frame] for j in spatial_annotations]
 
-        multi_region = [max(k) for k in ep_iou_on_at]
-        one_region = [s[[k[-1] for k in ep_in_frame].index(max([k[-1] for k in ep_in_frame]))] for s in ep_iou_on_at]
+        if ep_in_frame:
+            ep_iou_on_at = [[compute_iou((int(i[-9]), int(i[-8]), int(i[-9] + i[-7]), int(i[-8] + i[-6])), j) for i in ep_in_frame] for j in spatial_annotations]
+            multi_region = [max(k) for k in ep_iou_on_at]
+            one_region = [s[[k[-1] for k in ep_in_frame].index(max([k[-1] for k in ep_in_frame]))] for s in ep_iou_on_at]
+            iou_frame = [compute_iou(j, frame_region) for j in spatial_annotations]
 
-        iou_frame = [compute_iou(j, frame_region) for j in spatial_annotations]
-        multi_all.extend(multi_region)
-        single_all.extend(one_region)
-        frame_all.extend(iou_frame)
+            multi_all.extend(multi_region)
+            single_all.extend(one_region)
+            frame_all.extend(iou_frame)
 
     return multi_all, single_all, frame_all
 
