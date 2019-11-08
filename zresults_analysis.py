@@ -517,7 +517,7 @@ def get_iou_one(c3d_list_in_one_frame, video_spatial_annotation_path):
     spatial_annotations = [yoloLine2Shape(image_size, k[1], k[2], k[3], k[4]) for k in
                            basepy.read_txt_lines2list(spatial_annotation_txt, ' ')]
     for i in c3d_list_in_one_frame:
-        event_proposal = (int(i[-10]), int(i[-9]), int(i[-10] + i[-9]), int(i[-9] + i[-7]))
+        event_proposal = (int(i[-10]), int(i[-9]), int(i[-10] + i[-8]), int(i[-9] + i[-7]))
         iou_list_in_one_frames.append(max([compute_iou(event_proposal, bx) for bx in spatial_annotations]))
 
     print(max(iou_list_in_one_frames))
@@ -527,6 +527,50 @@ def get_iou_one(c3d_list_in_one_frame, video_spatial_annotation_path):
         return np.maximum(c3d_list_in_one_frame[select_one][:4096], c3d_list_in_one_frame[select_one][4096:8192])
     else:
         return False
+
+
+def recall_iou_all(temporal_annotation_file, video_spatial_annotation_path, event_proposal_json_path):
+    annotation_in_all = basepy.read_txt_lines2list(temporal_annotation_file)
+    multi_all, single_all, frame_all = [], [], []
+    for each_line in annotation_in_all:
+        multi_region, one_region, iou_frame = recall_iou_all(each_line, video_spatial_annotation_path, event_proposal_json_path)
+        multi_all.extend(multi_region)
+        single_all.extend(one_region)
+        frame_all.extend(iou_frame)
+
+    return multi_all, single_all, frame_all
+
+
+def recall_iou_video(each_line, video_spatial_annotation_path, event_proposal_json_path):
+    print(each_line[0])
+    video_name, video_class, start1, final1, start2, final2 = each_line[0].split('  ')
+    start1, final1, start2, final2 = int(start1), int(final1), int(start2), int(final2)
+    video_name, video_class, inflate = (video_name.replace('.mp4',''), video_class.replace('Normal','normal_test'), 16) if '.mp4' in video_name else (video_name, video_class, 8)
+
+    index_ep_vs_annotation = [[i, int(i + inflate/2)] for i in list(range(start1, final1)) + list(range(start2, final2)) if i % inflate == 0]
+    ep_json_file = osp.join(event_proposal_json_path, video_class + '@' + video_name + '.json')
+    with open(ep_json_file, 'r') as f:
+        info = json.load(f)
+    annotation_path = osp.join(video_spatial_annotation_path, video_name)
+    image_size, frame_region, wei_shu = ((240, 360), (0,0,360,240), 3) if 'ucsdped2' in video_spatial_annotation_path.lower() else ((240, 320), (0,0,320,240),5)
+    multi_all, single_all, frame_all = [], [], []
+    for ep_index, at_index in index_ep_vs_annotation:
+        spatial_annotation_txt = osp.join(annotation_path, str(int(at_index)).zfill(wei_shu) + '.txt')
+        spatial_annotations = [yoloLine2Shape(image_size, k[1], k[2], k[3], k[4]) for k in
+                               basepy.read_txt_lines2list(spatial_annotation_txt, ' ')]
+
+        ep_in_frame = [i for i in info if i[2] == ep_index]
+        ep_iou_on_at = [[compute_iou((int(i[-9]), int(i[-8]), int(i[-9] + i[-7]), int(i[-8] + i[-6])), j) for i in ep_in_frame] for j in spatial_annotations]
+
+        multi_region = [max(k) for k in ep_iou_on_at]
+        one_region = [s[[k[-1] for k in ep_in_frame].index(max([k[-1] for k in ep_in_frame]))] for s in ep_iou_on_at]
+
+        iou_frame = [compute_iou(j, frame_region) for j in spatial_annotations]
+        multi_all.extend(multi_region)
+        single_all.extend(one_region)
+        frame_all.extend(iou_frame)
+
+    return multi_all, single_all, frame_all
 
 
 if __name__ == '__main__':
