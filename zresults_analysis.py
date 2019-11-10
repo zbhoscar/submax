@@ -16,7 +16,8 @@ def main(_):
     tags = tf.flags
     F = tags.FLAGS
     tags.DEFINE_string('results_json_path',
-                       '/absolute/tensorflow_models/191110133218_UCSDped2_reform_motion_reformed_pyramid_80_56_1region_segment_32_c3d_npy/191110133218.ckpt-103_eval_json',
+                       '/absolute/tensorflow_models/191016193431_anoma_motion_reformed_pyramid_120_85_4region_maxtop_256_c3d_npy/191016193431.ckpt-14176_eval_json',
+                       # '/absolute/tensorflow_models/191110133218_UCSDped2_reform_motion_reformed_pyramid_80_56_1region_segment_32_c3d_npy/191110133218.ckpt-103_eval_json/',
                        # '/absolute/tensorflow_models/191017195809_UCSDped2_reform_motion_reformed_pyramid_80_56_1region_segment_32_c3d_npy/191017195809.ckpt-62_eval_json',
                        # '/absolute/tensorflow_models/191018004426_UCSDped2_reform_motion_reformed_pyramid_80_56_4region_segment_32_c3d_npy/191018004426.ckpt-62_eval_json',
                        # '/home/zbh/Desktop/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_120_85_1region_maxtop_256_c3d_npy/191007174553.ckpt-14302_eval_json',
@@ -161,7 +162,7 @@ def save_one_fig(x, y, title_str, xlabel_str, ylabel_str, save_file_path, for_ti
 
 
 def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_annotation_file, inflate,
-                         iou_threshold=0.17):
+                         iou_threshold=0.11):
     annotation_in_all = basepy.read_txt_lines2list(temporal_annotation_file, '  ')
     image_size = (240, 320) if 'Anomaly-Detection-Dataset' in temporal_annotation_file else (240, 360)
     wei_shu = 5 if 'Anomaly-Detection-Dataset' in temporal_annotation_file else 3
@@ -324,22 +325,22 @@ def get_temporal_duration(json_file, inflate, temporal_annotation_file):
             index_deflated = int(frame_index // inflate)
             temporal_score_select[index_deflated] = max(temporal_score_select[index_deflated], anomaly_score)
 
-    window_length = min(2 * int((len(temporal_score) - 1) / 2 / 2) + 1, 9)
+    window_length = min(2 * int((len(temporal_score) - 1) / 2 / 2) + 1, 13)
     window = [1/window_length] * window_length
     temporal_score_select_smooth = np.convolve(temporal_score_select, window, mode='same')
     temporal_score_select_smooth = np.minimum(temporal_score_select_smooth, 0.9999)
-    # info_smooth = info
-    # for j, one_clip in enumerate(info_smooth):
-    #     index = int(one_clip[2] // inflate)
-    #     if one_clip[-1] == 0:
-    #         one_clip[-1] = temporal_score_select_smooth[index] / 100
-    #     elif temporal_score_select[index] == 0:
-    #         one_clip[-1] = temporal_score_select_smooth[index]
-    #     else:
-    #         # if temporal_score_select[index] == 0 :
-    #         #     print(json_file, index)
-    #         one_clip[-1] = (one_clip[-1] / temporal_score_select[index]) * temporal_score_select_smooth[index]
-    # info_smooth = sorted(info_smooth, key=lambda x: x[-3], reverse=True)[:select_num]
+    info_smooth = info
+    for j, one_clip in enumerate(info_smooth):
+        index = int(one_clip[2] // inflate)
+        if one_clip[-1] == 0:
+            one_clip[-1] = temporal_score_select_smooth[index] / 100
+        elif temporal_score_select[index] == 0:
+            one_clip[-1] = temporal_score_select_smooth[index]
+        else:
+            # if temporal_score_select[index] == 0 :
+            #     print(json_file, index)
+            one_clip[-1] = (one_clip[-1] / temporal_score_select[index]) * temporal_score_select_smooth[index]
+    info_smooth = sorted(info_smooth, key=lambda x: x[-3], reverse=True)[:select_num]
 
     return video_name, len(temporal_score), temporal_score, temporal_score_select_smooth, temporal_truth, info
 
