@@ -555,9 +555,14 @@ def recall_iou_video(each_line, video_spatial_annotation_path, event_proposal_js
     image_size, frame_region, wei_shu = ((240, 360), (0,0,360,240), 3) if 'ucsdped2' in video_spatial_annotation_path.lower() else ((240, 320), (0,0,320,240),5)
     multi_all, single_all, frame_all = [], [], []
     for ep_index, at_index in index_ep_vs_annotation:
-        spatial_annotation_txt = osp.join(annotation_path, str(int(at_index)).zfill(wei_shu) + '.txt')
-        spatial_annotations = [yoloLine2Shape(image_size, k[1], k[2], k[3], k[4]) for k in
-                               basepy.read_txt_lines2list(spatial_annotation_txt, ' ')]
+        try:
+            spatial_annotation_txt = osp.join(annotation_path, str(int(at_index)).zfill(wei_shu) + '.txt')
+            spatial_annotations = [yoloLine2Shape(image_size, k[1], k[2], k[3], k[4]) for k in
+                                   basepy.read_txt_lines2list(spatial_annotation_txt, ' ')]
+        except FileNotFoundError:
+            spatial_annotation_txt = osp.join(annotation_path, str(int(ep_index)).zfill(wei_shu) + '.txt')
+            spatial_annotations = [yoloLine2Shape(image_size, k[1], k[2], k[3], k[4]) for k in
+                                   basepy.read_txt_lines2list(spatial_annotation_txt, ' ')]
 
         ep_in_frame = [i for i in info if i[2] == ep_index]
 
