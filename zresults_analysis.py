@@ -16,7 +16,10 @@ def main(_):
     tags = tf.flags
     F = tags.FLAGS
     tags.DEFINE_string('results_json_path',
-                       '/home/zbh/Desktop/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_120_85_1region_maxtop_256_c3d_npy/191007174553.ckpt-14302_eval_json',
+                       '/absolute/tensorflow_models/191110133218_UCSDped2_reform_motion_reformed_pyramid_80_56_1region_segment_32_c3d_npy/191110133218.ckpt-103_eval_json',
+                       # '/absolute/tensorflow_models/191017195809_UCSDped2_reform_motion_reformed_pyramid_80_56_1region_segment_32_c3d_npy/191017195809.ckpt-62_eval_json',
+                       # '/absolute/tensorflow_models/191018004426_UCSDped2_reform_motion_reformed_pyramid_80_56_4region_segment_32_c3d_npy/191018004426.ckpt-62_eval_json',
+                       # '/home/zbh/Desktop/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_120_85_1region_maxtop_256_c3d_npy/191007174553.ckpt-14302_eval_json',
                        'model folder path, or model ckpt file path:'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy/190918230353.ckpt-9619_eval_json'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy')
@@ -62,7 +65,7 @@ def results_evaluate(results_json_path, save_plot):
         rr = results_of_one[21]
         r = [rr] + [i* rr for i in results_of_one[19]]
         p = [0] + [j for j in results_of_one[18]]
-        plt.plot(r, p)
+        plt.plot(results_of_one[18], results_of_one[19])
         plt.show()
         np.savetxt('ours_fpr.txt', results_of_one[10])
         np.savetxt('ours_tpr.txt', results_of_one[11])
@@ -158,7 +161,7 @@ def save_one_fig(x, y, title_str, xlabel_str, ylabel_str, save_file_path, for_ti
 
 
 def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_annotation_file, inflate,
-                         iou_threshold=0.14):
+                         iou_threshold=0.17):
     annotation_in_all = basepy.read_txt_lines2list(temporal_annotation_file, '  ')
     image_size = (240, 320) if 'Anomaly-Detection-Dataset' in temporal_annotation_file else (240, 360)
     wei_shu = 5 if 'Anomaly-Detection-Dataset' in temporal_annotation_file else 3
@@ -181,7 +184,7 @@ def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_an
     spatial_groud_truth, covered_num = get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=1,
                                                                iou_threshold=iou_threshold)
     spatial_anomaly_score = [i[-1] for i in results_all_in_one]
-    p, r, thresholds = metrics.precision_recall_curve(spatial_groud_truth, spatial_anomaly_score)
+    p, r, thresholds = metrics.roc_curve(spatial_groud_truth, spatial_anomaly_score)
 
     return p, r, thresholds, covered_num / all_annotation_num
 
