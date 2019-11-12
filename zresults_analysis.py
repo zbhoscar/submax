@@ -16,11 +16,7 @@ def main(_):
     tags = tf.flags
     F = tags.FLAGS
     tags.DEFINE_string('results_json_path',
-                       '/absolute/tensorflow_models/191016193431_anoma_motion_reformed_pyramid_120_85_4region_maxtop_256_c3d_npy/191016193431.ckpt-14176_eval_json',
-                       # '/absolute/tensorflow_models/191110133218_UCSDped2_reform_motion_reformed_pyramid_80_56_1region_segment_32_c3d_npy/191110133218.ckpt-103_eval_json/',
-                       # '/absolute/tensorflow_models/191017195809_UCSDped2_reform_motion_reformed_pyramid_80_56_1region_segment_32_c3d_npy/191017195809.ckpt-62_eval_json',
-                       # '/absolute/tensorflow_models/191018004426_UCSDped2_reform_motion_reformed_pyramid_80_56_4region_segment_32_c3d_npy/191018004426.ckpt-62_eval_json',
-                       # '/home/zbh/Desktop/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_120_85_1region_maxtop_256_c3d_npy/191007174553.ckpt-14302_eval_json',
+                       '/absolute/tensorflow_models/191112132745_UCSDped2_reform_motion_reformed_pyramid_80_56_1region_segment_32_c3d_npy/191112132745.ckpt-13_eval_json',
                        'model folder path, or model ckpt file path:'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy/190918230353.ckpt-9619_eval_json'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy')
@@ -59,26 +55,14 @@ def results_evaluate(results_json_path, save_plot):
         # fpr, tpr, thresholds, auc, all_videos_map,  \
         # vfpr, vtpr, vthresholds, vauc, videos_order, \
         # fpr_s, tpr_s, thresholds_s, auc_s, vfpr_s, \
-        # vtpr_s, vthresholds_s, vauc_s, spatial_p, spatial_r, \
-        # spatial_threholds, recover_rate, info = results_of_one
+        # vtpr_s, vthresholds_s, vauc_s, spatial_fpr, spatial_tpr, \
+        # spatial_thresholds, max_recall, info = results_of_one
         print(results_of_one[3], results_of_one[8], results_of_one[13], results_of_one[17], results_json_path)
-        print(metrics.auc(results_of_one[19], results_of_one[18]), results_of_one[21])
-        rr = results_of_one[21]
-        r = [rr] + [i* rr for i in results_of_one[19]]
-        p = [0] + [j for j in results_of_one[18]]
+        print(metrics.auc(results_of_one[18], results_of_one[19]), results_of_one[21])
         plt.plot(results_of_one[18], results_of_one[19])
         plt.show()
-        np.savetxt('ours_fpr.txt', results_of_one[10])
-        np.savetxt('ours_tpr.txt', results_of_one[11])
-        np.savetxt('ours_r.txt', np.array(r))
-        np.savetxt('ours_p.txt', np.array(p))
-        a = 0
-        n = 0
-        for i in results_of_one[-1]:
-            if 'normal' in i[1].lower() and i[-1] > 0.5:
-                a += 1
-            elif 'normal' in i[1].lower() and i[-1] <= 0.5:
-                n += 1
+        np.save('./results/ped2_multi_fpr', results_of_one[18])
+        np.save('./results/ped2_multi_tpr', results_of_one[19])
     else:
         _eval_json_list = basepy.get_1tier_file_path_list(results_json_path, suffix='_eval_json')
         _eval_json_list = sorted(_eval_json_list, key=lambda x: int(x.split('_eval_json')[0].split('ckpt-')[1]))
@@ -121,7 +105,7 @@ def analysis_in_one_ckpt(results_json_path, temporal_annotation_file, inflate, s
     vfpr_s, vtpr_s, vthresholds_s = metrics.roc_curve(videos_truth, video_score_select, pos_label=1)
     vauc_s = metrics.auc(vfpr_s, vtpr_s)
 
-    spatial_p, spatial_r, spatial_threholds, recover_rate = \
+    spatial_fpr, spatial_tpr, spatial_thresholds, max_recall = \
         get_spatial_pr_curve(info_all, annotation_folder_path, temporal_annotation_file, inflate)
 
     if save_plot:
@@ -133,8 +117,8 @@ def analysis_in_one_ckpt(results_json_path, temporal_annotation_file, inflate, s
                      path_if_save.split('_eval_json')[0] + '_smooth.png', for_title=auc_s)
         save_one_fig(vfpr_s, vtpr_s, 'AUC = %f', 'False Positive Rate', 'True Positive Rate',
                      path_if_save.split('_eval_json')[0] + '_video_smooth.png', for_title=vauc_s)
-        save_one_fig(spatial_r, spatial_p, 'RECOVER = %f', 'Recall', 'Precision',
-                     path_if_save.split('_eval_json')[0] + '_pr_curve.png', for_title=recover_rate)
+        save_one_fig(spatial_fpr, spatial_tpr, 'RECOVER = %f', 'Recall', 'Precision',
+                     path_if_save.split('_eval_json')[0] + '_pr_curve.png', for_title=max_recall)
         if 'ucsd' in results_json_path.lower():
             data_path = '/absolute/datasets/UCSDped2_reform'
         elif 'anoma' in results_json_path.lower():
@@ -147,8 +131,8 @@ def analysis_in_one_ckpt(results_json_path, temporal_annotation_file, inflate, s
     return fpr, tpr, thresholds, auc, all_videos_map, \
            vfpr, vtpr, vthresholds, vauc, videos_order, \
            fpr_s, tpr_s, thresholds_s, auc_s, vfpr_s, \
-           vtpr_s, vthresholds_s, vauc_s, spatial_p, spatial_r, \
-           spatial_threholds, recover_rate, info_all
+           vtpr_s, vthresholds_s, vauc_s, spatial_fpr, spatial_tpr, \
+           spatial_thresholds, max_recall, info_all
 
 
 def save_one_fig(x, y, title_str, xlabel_str, ylabel_str, save_file_path, for_title=''):
@@ -162,7 +146,7 @@ def save_one_fig(x, y, title_str, xlabel_str, ylabel_str, save_file_path, for_ti
 
 
 def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_annotation_file, inflate,
-                         iou_threshold=0.11):
+                         iou_threshold=0.143):
     annotation_in_all = basepy.read_txt_lines2list(temporal_annotation_file, '  ')
     image_size = (240, 320) if 'Anomaly-Detection-Dataset' in temporal_annotation_file else (240, 360)
     wei_shu = 5 if 'Anomaly-Detection-Dataset' in temporal_annotation_file else 3
@@ -182,12 +166,12 @@ def get_spatial_pr_curve(results_all_in_one, annotation_folder_path, temporal_an
                 all_annotation_num = all_annotation_num + len(in_one_video[j])
         spatial_annotation[video_name_temp] = in_one_video
 
-    spatial_groud_truth, covered_num = get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=1,
+    spatial_groud_truth, covered_num = get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=2,
                                                                iou_threshold=iou_threshold)
     spatial_anomaly_score = [i[-1] for i in results_all_in_one]
-    p, r, thresholds = metrics.roc_curve(spatial_groud_truth, spatial_anomaly_score)
+    spatial_fpr, spatial_tpr, spatial_thresholds = metrics.roc_curve(spatial_groud_truth, spatial_anomaly_score)
 
-    return p, r, thresholds, covered_num / all_annotation_num
+    return spatial_fpr, spatial_tpr, spatial_thresholds, covered_num / all_annotation_num
 
 
 def get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=2, iou_threshold=0.5):
@@ -209,11 +193,13 @@ def get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=2, 
         # print(j, video_name, frame_index, area)
         if video_name in spatial_annotation.keys() and frame_index in spatial_annotation[video_name].keys():
             # print(video_name, frame_index)
-            for id, [area_gt, _] in enumerate(spatial_annotation[video_name][frame_index]):
+            for region_id, [area_gt, _] in enumerate(spatial_annotation[video_name][frame_index]):
+                # area=(0,0,360,240)
                 if compute_iou(area, area_gt) >= iou_threshold:
                     spatial_groud_truth[j] = 1
-                    spatial_annotation[video_name][frame_index][id][1] = 1
-
+                    spatial_annotation[video_name][frame_index][region_id][1] = 1
+        # else:
+        #     print('warning: somoething wrong with video_name: %s and frame_index: %s' % (video_name, frame_index))
     covered_num = 0
     for video in spatial_annotation:
         for index in spatial_annotation[video]:
@@ -311,6 +297,7 @@ def get_temporal_duration(json_file, inflate, temporal_annotation_file):
             index_deflated = int(frame_index // inflate)
             temporal_score[index_deflated] = max(temporal_score[index_deflated], anomaly_score)
     if -1 in temporal_score:
+        print(temporal_score)
         raise ValueError('Missing index in %s' % json_file)
     if len(temporal_score) != len(temporal_truth):
         raise ValueError('temporal_score and temporal_truth do not match in number in %s' % json_file)
@@ -428,14 +415,15 @@ def draw_spatial(info_all, data_path='/absolute/datasets/UCSDped2_reform', save_
         cv2.imwrite(save_frame, img)
 
 
-def tsne(class_norm, clase_anom, title='tsne of anomalous and normal features'):
+def tsne(class_norm, clase_anom, title='Video clip features'):
     in_one = np.vstack((class_norm, clase_anom))
     class1_num = len(class_norm)
     tsne = manifold.TSNE(n_components=2, )
     X_tsne = tsne.fit_transform(in_one)
     x_min, x_max = X_tsne.min(0), X_tsne.max(0)
     X_norm = (X_tsne - x_min) / (x_max - x_min)
-    plt.figure(title)
+    plt.figure()
+    plt.title(title, fontsize=22)
     ax = plt.gca()
     # ax.set_xlabel('x')
     # ax.set_ylabel('y')
