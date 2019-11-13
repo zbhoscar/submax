@@ -16,7 +16,7 @@ def main(_):
     tags = tf.flags
     F = tags.FLAGS
     tags.DEFINE_string('results_json_path',
-                       '/absolute/tensorflow_models/191112132745_UCSDped2_reform_motion_reformed_pyramid_80_56_1region_segment_32_c3d_npy/191112132745.ckpt-13_eval_json',
+                       '/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_180_127_4region_maxtop_256_c3d_npy/191007174553.ckpt-11138_eval_json',
                        'model folder path, or model ckpt file path:'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy/190918230353.ckpt-9619_eval_json'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy')
@@ -194,7 +194,7 @@ def get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=2, 
         if video_name in spatial_annotation.keys() and frame_index in spatial_annotation[video_name].keys():
             # print(video_name, frame_index)
             for region_id, [area_gt, _] in enumerate(spatial_annotation[video_name][frame_index]):
-                # area=(0,0,360,240)
+                area=(0,0,320,240)
                 if compute_iou(area, area_gt) >= iou_threshold:
                     spatial_groud_truth[j] = 1
                     spatial_annotation[video_name][frame_index][region_id][1] = 1

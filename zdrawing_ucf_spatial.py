@@ -2,7 +2,7 @@ from zresults_analysis import *
 
 line_width = 4
 # multi,single,frame = recall_iou_all('/absolute/datasets/UCSDped2_split_list/temproal_annotation.txt','/absolute/datasets/UCSDped2_spatial_annotation','/absolute/datasets/UCSDped2_reform_motion_pyramid_60_42_all_json')
-multi, single, video_clip = recall_iou_all('/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos_anomaly_only.txt', '/absolute/datasets/anoma_spatial_annotations', '/absolute/datasets/anoma_motion_pyramid_80_56_all_json')
+multi, single, video_clip = recall_iou_all('/absolute/datasets/Anomaly-Detection-Dataset/Temporal_Anomaly_Annotation_for_Testing_Videos_anomaly_only.txt', '/absolute/datasets/anoma_spatial_annotations_temp', '/absolute/datasets/anoma_motion_pyramid_80_56_all_json')
 grouth_truth = [1] * len(multi)
 pm, rm, tm = metrics.precision_recall_curve(grouth_truth, multi)
 ps, rs, ts = metrics.precision_recall_curve(grouth_truth, single)
