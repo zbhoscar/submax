@@ -21,6 +21,8 @@ plt.ylabel('Recall', fontsize=22)
 plt.legend(fontsize=18)
 plt.show()
 
+line_width = 2
+plt.figure(figsize=(3.7, 4.8))
 plt.title('(b) ROC curves', fontsize=22)
 plt.grid()
 plt.xlim((0,1))
@@ -29,21 +31,24 @@ plt.ylim((0,1))
 # plt.plot(fpr, tpr, label='Sultani et al., AUC=%.2f%%' % (metrics.auc(fpr, tpr)*100))
 # fpr, tpr = np.load('./results/ped2_zhong_fpr.npy')**0.7, np.load('./results/ped2_zhong_tpr.npy')
 # plt.plot(fpr, tpr, label='Zhong et al., AUC=%.2f%%' % (metrics.auc(fpr, tpr)*100))
-fpr, tpr = [0, 1], [0, 1]
-plt.plot(fpr, tpr, label='AUC=50%', color='k',linewidth=line_width)
+# fpr, tpr = [0, 1], [0, 1]
+# plt.plot(fpr, tpr, label='AUC=50%', color='k',linewidth=line_width)
 
-fpr, tpr = [0, 1], [0, 0]
-plt.plot(fpr, tpr, label='AUC=0', color='b',linewidth=line_width)
+fpr, tpr = np.load('./results/ucf_sultani_fpr.npy'), np.load('./results/ucf_sultani_tpr.npy')
+plt.plot(fpr, tpr, label='[34],   AUC=%.2f%%' % (metrics.auc(fpr, tpr)*100), color='b',linewidth=line_width)
 
-fpr, tpr = np.load('./results/ped2_single_fpr.npy'), np.load('./results/ped2_single_tpr.npy')
-plt.plot(fpr, tpr, label='AUC=%.2f%%' % (metrics.auc(fpr, tpr)*100), color='g',linewidth=line_width)
+fpr, tpr = np.load('./results/ucf_zhong_fpr.npy'), np.load('./results/ucf_zhong_tpr.npy')
+plt.plot(fpr, tpr, label='[42],   AUC=%.2f%%' % (metrics.auc(fpr, tpr)*100), color='g',linewidth=line_width)
 
-fpr, tpr = np.load('./results/ped2_multi_fpr.npy'), np.load('./results/ped2_multi_tpr.npy')
-plt.plot(fpr, tpr, label='AUC=%.2f%%' % (metrics.auc(fpr, tpr)*100), color='r',linewidth=line_width)
+fpr, tpr = np.load('./results/ucf_single_fpr.npy'), np.load('./results/ucf_single_tpr.npy')
+plt.plot(fpr, tpr, label='sSEP,  AUC=%.2f%%' % (metrics.auc(fpr, tpr)*100), color='m',linewidth=line_width)
+
+fpr, tpr = np.load('./results/ucf_multi_fpr.npy'), np.load('./results/ucf_multi_tpr.npy')
+plt.plot(fpr, tpr, label='mSEP, AUC=%.2f%%' % (metrics.auc(fpr, tpr)*100), color='r',linewidth=line_width)
 
 plt.xlabel('False Positive Rate', fontsize=22)
 plt.ylabel('True Positive Rate', fontsize=22)
-plt.legend(loc=4,fontsize=18)
+plt.legend(fontsize=14)
 plt.show()
 
 print('debug this')

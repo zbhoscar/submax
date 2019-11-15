@@ -7,19 +7,19 @@ plt.grid()
 plt.xlim((0,1))
 plt.ylim((0,1))
 
-fpr, tpr = np.load('./results/ucf_roc_3_sultani_fpr.npy'), np.load('./results/ucf_roc_3_sultani_tpr.npy')
-plt.plot(fpr, tpr, label='[34],   AUC=74.44%', color='b',linewidth=line_width)
+fpr, tpr = np.load('./results/ped2_roc_sultani_fpr.npy'), np.load('./results/ped2_roc_sultani_tpr.npy')
+plt.plot(fpr, tpr, label='[34],   AUC=82.03%', color='b',linewidth=line_width)
 # plt.plot(fpr, tpr, label='Sultani et al., AUC=74.44%', color='b',linewidth=line_width)
 
-fpr, tpr = np.load('./results/ucf_roc_4_zhong_fpr.npy'), np.load('./results/ucf_roc_4_zhong_tpr.npy')
-plt.plot(fpr, tpr, label='[42],   AUC=81.08%', color='g',linewidth=line_width)
+fpr, tpr = np.load('./results/ped2_roc_zhong_fpr.npy'), np.load('./results/ped2_roc_zhong_tpr.npy')
+plt.plot(fpr, tpr, label='[42],   AUC=88.12%', color='g',linewidth=line_width)
 # plt.plot(fpr, tpr, label='Zhong et al.,  AUC=81.08%', color='g',linewidth=line_width)
 
-fpr, tpr = np.load('./results/ucf_roc_6_our_sSEP_fpr.npy'), np.load('./results/ucf_roc_6_our_sSEP_tpr.npy')
-plt.plot(fpr, tpr, label='sSEP,  AUC=79.23%', color='m',linewidth=line_width)
+fpr, tpr = np.load('./results/ped2_roc_sSEP_fpr.npy'), np.load('./results/ped2_roc_sSEP_tpr.npy')
+plt.plot(fpr, tpr, label='sSEP,  AUC=89.12%', color='m',linewidth=line_width)
 
-fpr, tpr = np.load('./results/ucf_roc_5_our_fpr.npy'), np.load('./results/ucf_roc_5_our_tpr.npy')
-plt.plot(fpr, tpr, label='mSEP, AUC=83.16%', color='r',linewidth=line_width)
+fpr, tpr = np.load('./results/ped2_roc_mSEP_fpr.npy'), np.load('./results/ped2_roc_mSEP_tpr.npy')
+plt.plot(fpr, tpr, label='mSEP, AUC=94.10%', color='r',linewidth=line_width)
 
 plt.xlabel('False Positive Rate', fontsize=14)
 plt.ylabel('True Positive Rate', fontsize=14)

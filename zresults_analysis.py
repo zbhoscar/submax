@@ -16,7 +16,7 @@ def main(_):
     tags = tf.flags
     F = tags.FLAGS
     tags.DEFINE_string('results_json_path',
-                       '/absolute/tensorflow_models/191007174553_anoma_motion_reformed_single_180_127_4region_maxtop_256_c3d_npy/191007174553.ckpt-11138_eval_json',
+                       '/absolute/tensorflow_models/191007141003_UCSDped2_reform_motion_reformed_single_180_127_1region_segment_32_c3d_npy/191007141003.ckpt-64_eval_json',
                        'model folder path, or model ckpt file path:'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy/190918230353.ckpt-9619_eval_json'
                        '/absolute/tensorflow_models/190918230353_anoma_motion_reformed_pyramid_120_85_1region_maxtop_1000_c3d_npy')
@@ -61,8 +61,8 @@ def results_evaluate(results_json_path, save_plot):
         print(metrics.auc(results_of_one[18], results_of_one[19]), results_of_one[21])
         plt.plot(results_of_one[18], results_of_one[19])
         plt.show()
-        np.save('./results/ped2_multi_fpr', results_of_one[18])
-        np.save('./results/ped2_multi_tpr', results_of_one[19])
+        # np.save('./results/ped2_multi_fpr', results_of_one[18])
+        # np.save('./results/ped2_multi_tpr', results_of_one[19])
     else:
         _eval_json_list = basepy.get_1tier_file_path_list(results_json_path, suffix='_eval_json')
         _eval_json_list = sorted(_eval_json_list, key=lambda x: int(x.split('_eval_json')[0].split('ckpt-')[1]))
@@ -194,7 +194,7 @@ def get_spatial_groud_truth(results_all_in_one, spatial_annotation, scale_id=2, 
         if video_name in spatial_annotation.keys() and frame_index in spatial_annotation[video_name].keys():
             # print(video_name, frame_index)
             for region_id, [area_gt, _] in enumerate(spatial_annotation[video_name][frame_index]):
-                area=(0,0,320,240)
+                # area=(0,0,320,240)
                 if compute_iou(area, area_gt) >= iou_threshold:
                     spatial_groud_truth[j] = 1
                     spatial_annotation[video_name][frame_index][region_id][1] = 1
@@ -422,7 +422,7 @@ def tsne(class_norm, clase_anom, title='Video clip features'):
     X_tsne = tsne.fit_transform(in_one)
     x_min, x_max = X_tsne.min(0), X_tsne.max(0)
     X_norm = (X_tsne - x_min) / (x_max - x_min)
-    plt.figure()
+    plt.figure(figsize=(3.2, 4.8))
     plt.title(title, fontsize=22)
     ax = plt.gca()
     # ax.set_xlabel('x')
