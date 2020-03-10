@@ -22,7 +22,7 @@ do
         if [[ ! -d "${file[@]%.mp4}" ]]; then
             mkdir -p "${file[@]%.mp4}"
         fi
-        ffmpeg -i "$file" -qscale:v 2 -vf fps=$2 "${file[@]%.mp4}"/%05d.jpg
+        ffmpeg -i "$file" -vf fps=$2 -qscale:v 1 "${file[@]%.mp4}"/%05d.jpg
         rm "$file"
     done
 done

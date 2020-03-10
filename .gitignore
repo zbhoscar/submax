@@ -1,4 +1,5 @@
 sports1m_finetuning_ucf101.model
+crop_mean.npy
 .idea/
 /temp
 
